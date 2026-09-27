@@ -1,0 +1,64 @@
+# Wrap the GitHub Pages build in a native Android WebView (solana-mobile webshell) and sign it.
+name: APK
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SOLANA_MOBILE_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      SOLANA_MOBILE_KEY_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      # Same packages Solana Mobile's own webshell CI installs for the template (compileSdk 37).
+      - name: Install Android packages
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-37.0' 'build-tools;37.0.0'
+
+      - name: Restore the signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.p12"
+
+      - name: Generate the Android project
+        run: >
+          npx --yes solana-mobile@0.5.0 webshell init "$RUNNER_TEMP/app"
+          --manifest https://xelagate.github.io/agent-academy/manifest.webmanifest
+          --url https://xelagate.github.io/agent-academy/
+          --app-name "Agent Academy"
+          --application-id com.xelagate.agentacademy
+          --keystore-alias agentacademy
+          --keystore-path "$RUNNER_TEMP/release.p12"
+          --version-code ${{ github.run_number }}
+          --version-name 0.1.${{ github.run_number }}
+          --skip-version-check
+
+      - name: Build the APK
+        run: npx --yes solana-mobile@0.5.0 webshell build "$RUNNER_TEMP/app" --stacktrace --skip-version-check
+
+      - run: cp "$RUNNER_TEMP/app/app/build/outputs/apk/release/app-release.apk" agent-academy.apk
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: agent-academy-apk
+          path: agent-academy.apk
+
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: agent-academy.apk
