@@ -300,7 +300,12 @@
   #scene-ball-postmortem .card[aria-pressed="true"]::after { translate: 20px 0; border-color: var(--accent); background: #fffdd1; }
 
   /* Victory is a small stage: cloth banner, three entrance stars, real medals. */
-  #scene-reward, #scene-ball-reward { max-width: 1020px; min-height: calc(100svh - 64px - var(--hud-space)); display: grid; align-content: center; justify-items: center; gap: 28px; padding: 36px 8px; text-align: center; }
+  #scene-reward, #scene-ball-reward, #scene-takeaway { max-width: 1020px; min-height: calc(100svh - 64px - var(--hud-space)); display: grid; align-content: center; justify-items: center; gap: 28px; padding: 36px 8px; text-align: center; }
+  #scene-takeaway .story-copy, #scene-takeaway .card-row, #scene-takeaway #takeaway-feedback { width: 100%; text-align: left; }
+  #scene-takeaway .card-row { justify-content: center; }
+  #takeaway-feedback { scroll-margin-block: 18px; }
+  #takeaway-reply { padding: 20px; border: 3px solid var(--green-line); border-radius: 16px; background: var(--selected); }
+  #takeaway-reply.postmortem-reply--miss { border-color: var(--amber-line); background: var(--gold-pale); }
   .reward-celebration { position: relative; isolation: isolate; width: 100%; padding: 0 32px 30px; border: 4px solid var(--edge); border-radius: 28px; background: var(--panel); box-shadow: var(--shadow), inset 0 0 0 6px var(--gold-soft); }
   .reward-celebration > h1 { margin: -24px auto 0; padding: 10px 44px; font-size: 48px; transform: rotate(-2deg); }
   .reward-stars { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 22px auto 0; }
@@ -501,7 +506,7 @@
     #scene-ball-postmortem .card[aria-pressed] { font-size: 16px; padding-left: 12px; padding-right: 72px; }
     #scene-ball-postmortem .card[aria-pressed]::before { right: 8px; }
     #scene-ball-postmortem .card[aria-pressed]::after { right: 33px; }
-    #scene-reward, #scene-ball-reward { padding: 24px 0 8px; gap: 26px; }
+    #scene-reward, #scene-ball-reward, #scene-takeaway { padding: 24px 0 8px; gap: 26px; }
     .reward-celebration { padding: 0 18px 24px; }
     .reward-celebration > h1 { font-size: 38px; padding: 10px 24px; }
     .reward-stars { margin-top: 24px; }
@@ -516,7 +521,7 @@
     .badge h2 { font-size: 22px; }
     .badge p { font-size: 16px; }
     .reward-followup { padding: 18px 12px; }
-    #scene-reward > button, #scene-ball-reward > button { width: 100%; }
+    #scene-reward > button, #scene-ball-reward > button, #scene-takeaway > button { width: 100%; }
     .course-hud { padding: 16px; gap: 12px; flex-wrap: wrap; justify-content: center; }
     .course__title { padding: 10px 20px; font-size: 28px; }
     .hud-progress { gap: 7px; padding: 7px 12px; }
@@ -608,6 +613,7 @@ body:has(#scene-course:not([hidden])) .aa-parents-btn { display: inline-flex; al
   <section class="scene" id="scene-ball-postmortem" hidden></section>
   <section class="scene" id="scene-ball-run2" hidden></section>
   <section class="scene" id="scene-ball-reward" hidden></section>
+  <section class="scene" id="scene-takeaway" hidden></section>
 </div>
 
 <script>
@@ -835,6 +841,18 @@ const CONTENT = {
       followup: (moves1, word1, outcome1, moves2, word2, outcome2) =>
         `First try: ${moves1} ${word1}, ${outcome1}. Second try: ${moves2} ${word2}, ${outcome2}.`,
       callTip: 'Tip: a creature that can call Smokey by name finds him one stop sooner.',
+    },
+    takeaway: {
+      heading: 'What you learned',
+      lesson: 'Your creature found Smokey once it could remember where it had been.',
+      bridge: 'Real AI helpers work the same way. A chatbot doesn’t remember yesterday’s chat unless someone gave it a memory.',
+      question: 'You told an AI helper your dog’s name yesterday. Today it asks again. Why?',
+      answers: [
+        { text: 'It’s broken', reply: 'Nothing’s broken. It just wasn’t given a memory.', correct: false },
+        { text: 'It wasn’t given a memory', reply: 'Right. It only knows what it’s given.', correct: true },
+        { text: 'It doesn’t like you', reply: 'AI has no feelings about you. It just forgot.', correct: false },
+      ],
+      cta: 'What did you learn?',
       back: 'Back to the course map',
     },
   },
@@ -881,6 +899,18 @@ const CONTENT = {
       badgeHeading: 'Rule Maker',
       badgeBody: 'Kept your creature safe without making it useless.',
       newPart: 'New for your creature: a life vest. Its rules keep it safe, even after a mistake.',
+    },
+    takeaway: {
+      heading: 'What you learned',
+      lesson: 'Your creature took the fastest way, even over the tulips, until you gave it rules. Too strict a rule, and it did nothing at all.',
+      bridge: 'Real AI does exactly what it’s asked, in the easiest way it can. Rules tell it what never to do.',
+      question: 'You ask an AI helper to “make my essay shorter”. It deletes your best paragraph. What was missing?',
+      answers: [
+        { text: 'A faster AI', reply: 'Speed wasn’t the problem. It did what you asked, just not how you wanted.', correct: false },
+        { text: 'A rule, like “don’t remove my main ideas”', reply: 'Right. Say what it must never do.', correct: true },
+        { text: 'Nothing, AI is always right', reply: 'AI makes mistakes. You fix them by fixing the setup.', correct: false },
+      ],
+      cta: 'What did you learn?',
       back: 'Back to the course map',
     },
     harm: {
@@ -1148,7 +1178,7 @@ if (typeof module !== 'undefined') module.exports = BALL;
   window.addEventListener('resize', () => closeHint());
 
   // Every level walks the same five stages; a level's scene ids differ only by prefix.
-  const STAGE_OF = { intro: 0, pick: 0, build: 1, run1: 2, result: 2, postmortem: 3, run2: 3, reward: 4 };
+  const STAGE_OF = { intro: 0, pick: 0, build: 1, run1: 2, result: 2, postmortem: 3, run2: 3, reward: 4, takeaway: 4 };
 
   function renderLevelHud(stage) {
     const hud = document.getElementById('level-hud');
@@ -1518,6 +1548,48 @@ if (typeof module !== 'undefined') module.exports = BALL;
     course.querySelectorAll('.course-trail path').forEach((p) => p.setAttribute('d', d));
   });
 
+  // Takeaway scene — shared by every level: names the lesson and bridges it to real AI.
+  // `takeawaySolved` gates the "Back to the course map" button; unlimited retries on a miss.
+  let takeawayAnswer = null;
+  let takeawaySolved = false;
+
+  function renderTakeaway(levelKey) {
+    const t = CONTENT[levelKey].takeaway;
+    const answer = takeawayAnswer === null ? null : t.answers[takeawayAnswer];
+    document.getElementById('scene-takeaway').innerHTML = `
+      <h1 class="ribbon">${t.heading}</h1>
+      <div class="story-copy">
+        <p>${t.lesson}</p>
+        <p>${t.bridge}</p>
+        <p>${t.question}</p>
+      </div>
+      <div class="card-row">
+        ${t.answers.map((a, i) => `<div class="card${i === takeawayAnswer ? ' selected' : ''}" role="button" tabindex="0" onclick="answerTakeaway('${levelKey}', ${i})">${a.text}</div>`).join('')}
+      </div>
+      <div id="takeaway-feedback" role="region" aria-labelledby="takeaway-reply" tabindex="-1" ${answer ? '' : 'hidden'}>
+        <p id="takeaway-reply"${answer && !answer.correct ? ' class="postmortem-reply--miss"' : ''}>${answer ? answer.reply : ''}</p>
+      </div>
+      ${takeawaySolved ? `<button onclick="renderCourseMap(); showScene('course')">${t.back}</button>` : ''}
+    `;
+  }
+
+  function answerTakeaway(levelKey, i) {
+    takeawayAnswer = i;
+    if (CONTENT[levelKey].takeaway.answers[i].correct) takeawaySolved = true;
+    renderTakeaway(levelKey);
+    const feedback = document.getElementById('takeaway-feedback');
+    feedback.focus({ preventScroll: true });
+    feedback.scrollIntoView({ block: 'nearest' });
+  }
+
+  // Entry point from a reward scene's cta — always starts fresh, so a replay never shows a stale answer.
+  function startTakeaway(levelKey) {
+    takeawayAnswer = null;
+    takeawaySolved = false;
+    renderTakeaway(levelKey);
+    showScene('takeaway');
+  }
+
 </script>
 <script>
 // demo/levels/lost-cat.js — level 1's scenes. Its walk lives in lost-cat-sim.js.
@@ -1861,7 +1933,7 @@ if (typeof module !== 'undefined') module.exports = BALL;
       )}</p>
       ${state.skills.includes('call') || state.creature === 'blue' ? '' : `<p>${CONTENT.lostCat.reward.callTip}</p>`}
       </div>
-      <button onclick="renderCourseMap(); showScene('course')">${CONTENT.lostCat.reward.back}</button>
+      <button onclick="startTakeaway('lostCat')">${CONTENT.lostCat.takeaway.cta}</button>
     `;
   }
 
@@ -2080,7 +2152,7 @@ if (typeof module !== 'undefined') module.exports = BALL;
       </div>
       </div>
       </div>
-      <button onclick="renderCourseMap(); showScene('course')">${CONTENT.ball.reward.back}</button>
+      <button onclick="startTakeaway('ball')">${CONTENT.ball.takeaway.cta}</button>
     `;
   }
 
