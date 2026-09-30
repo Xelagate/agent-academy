@@ -1,5 +1,5 @@
 // Cache-first shell: after the first online launch the app opens with no network.
-const CACHE = 'agent-academy-43a79486898f';
+const CACHE = 'agent-academy-42dd05c63ba4';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
