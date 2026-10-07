@@ -1,5 +1,6 @@
-// Cache-first shell: after the first online launch the app opens with no network.
-const CACHE = 'agent-academy-e4d2d7aedb79';
+// After the first online launch the app opens with no network. The page itself is network-first,
+// so a new release shows on the next launch instead of the one after.
+const CACHE = 'agent-academy-bb3bfdacdebf';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -14,5 +15,12 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
-  e.respondWith(caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request)));
+  const cached = () => caches.match(e.request, { ignoreSearch: true });
+  if (e.request.mode === 'navigate') {
+    e.respondWith(fetch(e.request)
+      .then((res) => { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); return res; })
+      .catch(() => cached()));
+    return;
+  }
+  e.respondWith(cached().then((hit) => hit || fetch(e.request)));
 });
