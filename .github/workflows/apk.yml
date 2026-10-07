@@ -40,7 +40,7 @@ jobs:
           npx --yes solana-mobile@0.5.0 webshell init "$RUNNER_TEMP/app"
           --manifest https://xelagate.github.io/agent-academy/manifest.webmanifest
           --url https://xelagate.github.io/agent-academy/
-          --app-name "Agent Academy"
+          --app-name "Hintville"
           --application-id com.xelagate.agentacademy
           --keystore-alias agentacademy
           --keystore-path "$RUNNER_TEMP/release.p12"

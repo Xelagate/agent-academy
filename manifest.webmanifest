@@ -1,6 +1,6 @@
 {
-  "name": "Agent Academy",
-  "short_name": "Agent Academy",
+  "name": "Hintville",
+  "short_name": "Hintville",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
