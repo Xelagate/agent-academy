@@ -48,6 +48,10 @@ jobs:
           --version-name 0.1.${{ github.run_number }}
           --skip-version-check
 
+      # webshell paints the launcher background with theme_color (green); match the icon's yellow instead.
+      - name: Yellow launcher background
+        run: sed -i 's|<color name="launcher_icon_background">[^<]*<|<color name="launcher_icon_background">#FFD34E<|' "$RUNNER_TEMP/app/app/src/main/res/values/colors.xml" && grep launcher_icon_background "$RUNNER_TEMP/app/app/src/main/res/values/colors.xml"
+
       - name: Build the APK
         run: npx --yes solana-mobile@0.5.0 webshell build "$RUNNER_TEMP/app" --stacktrace --skip-version-check
 
