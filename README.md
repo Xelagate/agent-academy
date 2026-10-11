@@ -55,9 +55,7 @@ player costs close to nothing to run.
 ## Team
 
 **Alex Pylypenko, founder (solo), Ukraine.** AI automation engineer at Peanut Trade, a crypto
-market-making firm: I build LLM tools and Solana/EVM pipelines that handle real money. Before that
-I mentored a Python course, so teaching step by step without handing over the answer is what I did
-for a living. Built Hintville in about four weeks during Solana Startup Terminal 2.0 (Superteam
+market-making firm: I build LLM tools and Solana/EVM pipelines that handle real money. Built Hintville in about four weeks during Solana Startup Terminal 2.0 (Superteam
 Ukraine).
 
 Contact: [Telegram](https://t.me/GodsLikesMe)
