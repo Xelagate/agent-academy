@@ -4,7 +4,7 @@ A maths game for kids where the AI helper gives hints, never answers.
 
 **Play now, no install, no account:** https://xelagate.github.io/agent-academy/
 
-**Android APK for the Solana Seeker:** [Releases](https://github.com/Xelagate/agent-academy/releases) (latest v0.3.1)
+**Android APK for the Solana Seeker:** [Releases](https://github.com/Xelagate/agent-academy/releases) (latest v0.3.2)
 
 ## The problem
 
@@ -41,7 +41,7 @@ Next (not built yet): a soulbound learning badge on the parent's wallet for each
 | | |
 |---|---|
 | Built | Solo, in about 4 weeks, during Solana Startup Terminal 2.0 (Superteam Ukraine) |
-| Shipped | 4 releases in 11 days: v0.1.0 (27 Sep) → v0.3.1 (7 Oct) |
+| Shipped | 5 releases in 15 days: v0.1.0 (27 Sep) → v0.3.2 (11 Oct) |
 | Playable | 1 level (Fix the Bridge, "Adding to 5"); two more places on the map are locked |
 | Users | 0 so far. Tested by a startup mentor (2 rounds), the Superteam Ukraine team, and family |
 | Next | First families from the Solana community: Superteam and Colosseum parents, Seeker owners |
