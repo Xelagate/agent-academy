@@ -1,0 +1,38 @@
+/* Parent gate and parent area — see parent.js. Tokens come from the game's :root. */
+.aa-gate {
+  position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px;
+  background: var(--surface); transition: opacity 200ms ease-out;
+}
+.aa-gate--leaving { opacity: 0; }
+.aa-gate__card {
+  display: grid; gap: 16px; max-width: 440px; padding: 28px 24px; text-align: center;
+  background: var(--paper); border: 3px solid var(--edge); border-radius: 24px; box-shadow: var(--shadow);
+}
+.aa-gate__card h1 { font-size: clamp(28px, 7vw, 40px); color: var(--ink); }
+.aa-gate__card p { color: var(--muted); font-size: 18px; }
+.aa-gate__error { color: var(--warn); background: var(--warn-soft); padding: 10px 12px; border-radius: 12px; }
+.aa-link {
+  min-height: 44px; padding: 8px 12px; background: none; border: 0; box-shadow: none;
+  color: var(--blue); text-decoration: underline; font-weight: 700;
+}
+.aa-link:active:not(:disabled) { transform: none; box-shadow: none; }
+.aa-parents-btn {
+  display: none; position: fixed; top: 37px; right: 3%; z-index: 20;
+  min-height: 44px; padding: 8px 16px; font-size: 16px;
+  --lip: var(--navy-deep); background: var(--blue); border-color: var(--navy-deep);
+}
+body:has(#scene-course:not([hidden])) .aa-parents-btn { display: inline-flex; align-items: center; }
+/* The button shares the map's title row; on a phone the title moves left to make room. */
+@media (max-width: 600px) {
+  .aa-parents-btn { top: 25px; right: 16px; }
+  .course-hud { justify-content: flex-start; }
+}
+.aa-sheet {
+  width: min(440px, calc(100vw - 32px)); padding: 24px; border: 3px solid var(--edge); border-radius: 24px;
+  background: var(--paper); color: var(--ink); box-shadow: var(--shadow);
+}
+.aa-sheet::backdrop { background: #163c5299; }
+.aa-sheet > * + * { margin-top: 16px; }
+.aa-jar { padding: 16px; background: var(--panel); border: 2px dashed var(--amber-line); border-radius: 16px; }
+.aa-jar__list { margin: 8px 0 0; padding-left: 20px; }
+@media (prefers-reduced-motion: reduce) { .aa-gate { transition: none; } }

@@ -1,0 +1,398 @@
+<title>Hintville</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @font-face { font-family: Nunito; src: url("assets/fonts/nunito.woff2") format("woff2"); font-weight: 500 900; font-display: swap; }
+  :root {
+    color-scheme: light;
+    --ink: #243e4c; --muted: #465866; --edge: #294957;
+    --surface: #fff8df; --soft: #e0eff4; --selected: #dafaab;
+    --accent: #286b10; --button-ink: #fff; --warn: #b3262c; --warn-soft: #ffe5df;
+    --gold: #ffd34e; --blue: #126c9e; --orange: #a9440c;
+    --shadow: 0 6px 0 #243e4c, 0 12px 24px #18394a30;
+    --font-display: Nunito, sans-serif; --font-body: Nunito, sans-serif;
+    --navy-deep: #163c52; --navy-ink: #163f56; --blue-deep: #155f84; --paper: #fffdf4;
+    --panel: #fff4cd; --sky-soft: #e6f7ff; --gold-soft: #ffdb69; --gold-pale: #fff0b8;
+    --amber-line: #b88a1c; --wood: #784515; --orange-deep: #753409; --orange-bright: #c2570c;
+    --accent-deep: #1d510b; --green-line: #395d35; --card-line: #58748a; --line-soft: #c8d8d8;
+    --locked-deep: #405969; --locked-line: #718389; --locked-ink: #354b55; --locked-soft: #edf4ed;
+    --focus: #132f67; --sign: #fff5da; --sign-line: #71623b; --sign-ink: #34402b;
+    --post: #948866;
+    --village-art: none;
+    --hud-space: 0px;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; color: var(--ink); background: linear-gradient(#87cef2, #d6eff2 38%, #98bf59) fixed; font: 700 18px/1.45 var(--font-body); isolation: isolate; }
+  /* One art reference serves every backdrop, including the standalone build. */
+  body::before, body::after { content: ""; position: fixed; pointer-events: none; z-index: -2; inset: 0; }
+  body::before { background: var(--village-art) center / cover no-repeat; filter: blur(5px) saturate(1.15) brightness(.87); }
+  body::after { z-index: -1; background: linear-gradient(180deg, #2f98db33, #144b6126 50%, #163f5666); }
+  body:has(#scene-course:not([hidden]))::before { inset: 0; filter: saturate(1.12); }
+  body:has(#scene-course:not([hidden]))::after { background: linear-gradient(180deg, #2c7abd1c, transparent 40%, #28473526); }
+  .wrap { width: 100%; max-width: 1680px; margin: auto; padding: 32px clamp(16px, 3.5vw, 48px); }
+  .wrap:has(#scene-course:not([hidden])) { max-width: none; padding: 0; }
+  .wrap:has(.voice-caption:not([hidden])) { padding-bottom: 120px; }
+  /* Inside a level: a way back to the map and where this attempt stands. */
+  .wrap:has(.level-hud:not([hidden])) { --hud-space: 64px; }
+  .level-hud { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1120px; margin: -12px auto 16px; }
+  .hud-home { --lip: var(--navy-deep); display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 16px 8px 12px; border-color: var(--navy-deep); border-radius: 14px; background: var(--paper); color: var(--navy-ink); font-size: 16px; }
+  .hud-home .game-icon { width: 24px; height: 24px; }
+  .level-steps { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border: 3px solid var(--navy-deep); border-radius: 30px; background: var(--blue); box-shadow: 0 4px 0 var(--navy-deep), inset 0 2px 0 #ffffff45; color: #fff; font-size: 15px; font-weight: 900; }
+  .hud-home { flex: none; }
+  .level-steps__label { white-space: nowrap; }
+  .level-steps__pips { display: flex; gap: 6px; }
+  .level-steps__pips i { width: 14px; height: 14px; border: 2px solid var(--line-soft); border-radius: 50%; background: #ffffff30; }
+  .level-steps__pips i.is-done { background: var(--gold-soft); border-color: var(--gold-soft); }
+  .level-steps__pips i.is-current { width: 30px; border-radius: 8px; background: #fff; border-color: #fff; }
+  .scene { max-width: 1120px; min-width: 0; margin: auto; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  h1, h2, p { margin: 0 0 18px; }
+  h1 { font: 900 clamp(34px, 4.5vw, 58px)/1.08 var(--font-display); letter-spacing: -.035em; text-wrap: balance; }
+  h2 { font: 900 25px/1.18 var(--font-display); letter-spacing: -.02em; text-wrap: balance; }
+  button, .card { font: 800 18px/1.3 var(--font-body); overflow-wrap: anywhere; }
+  button, .card { touch-action: manipulation; } /* a quick double tap presses twice instead of zooming */
+  button {
+    --lip: var(--accent-deep); min-height: 56px; max-width: 100%; padding: 14px 24px; border: 3px solid var(--accent-deep); border-radius: 16px;
+    background: linear-gradient(#398516, var(--accent)); color: var(--button-ink); cursor: pointer;
+    box-shadow: 0 4px 0 var(--lip), inset 0 2px 0 #ffffff4a; transition: transform 120ms, box-shadow 120ms, filter 120ms;
+  }
+  button:hover:not(:disabled) { filter: brightness(1.08); }
+  button:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--lip), inset 0 2px 0 #ffffff35; }
+  button:disabled { background: var(--locked-soft); border-color: var(--card-line); color: var(--locked-ink); box-shadow: 0 4px 0 var(--card-line); cursor: not-allowed; }
+  :is(button, [tabindex]:not([tabindex="-1"]), summary):focus-visible { outline: 4px solid var(--focus); outline-offset: 5px; box-shadow: 0 0 0 5px #fff; }
+  .game-icon { width: 28px; height: 28px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+  .game-icon--star { fill: var(--gold); stroke: #86530b; stroke-width: 1.5; }
+
+  /* Orange cloth pennants, with an ivory seam and a dark cut edge. */
+  .ribbon, .course__title, .reward-celebration > h1 {
+    position: relative; width: fit-content; max-width: 100%; padding: 12px 26px; border: 3px solid var(--gold-pale);
+    border-radius: 9px; color: #fff; background: linear-gradient(var(--orange-bright), var(--orange));
+    box-shadow: 0 0 0 3px var(--wood), 0 6px 0 var(--wood); text-shadow: 0 2px 0 var(--orange-deep);
+  }
+  .ribbon::before, .ribbon::after, .reward-celebration > h1::before, .reward-celebration > h1::after {
+    content: ""; position: absolute; z-index: -1; top: 13px; width: 28px; height: 100%; background: var(--orange);
+  }
+  .ribbon::before, .reward-celebration > h1::before { right: calc(100% - 7px); clip-path: polygon(0 0,100% 0,100% 100%,0 100%,28% 50%); }
+  .ribbon::after, .reward-celebration > h1::after { left: calc(100% - 7px); clip-path: polygon(0 0,100% 0,72% 50%,100% 100%,0 100%); }
+
+  /* A speaking character occupies the foreground of the village. */
+  .story-copy { min-width: 0; }
+  .story-copy h1 { padding: 16px 20px; border: 3px solid var(--wood); border-radius: 12px; background: var(--gold-soft); color: var(--orange-deep); paint-order: stroke fill; -webkit-text-stroke: 3px var(--paper); text-shadow: 0 3px 0 var(--paper); box-shadow: 0 5px 0 var(--wood); margin-bottom: 28px; }
+  .story-copy p, .today {
+    position: relative; padding: 26px; border: 3px solid var(--edge); border-radius: 24px; background: var(--paper); color: var(--ink);
+    box-shadow: 0 6px 0 var(--edge), inset 0 0 0 4px #fff; font-size: 22px; line-height: 1.45;
+  }
+  .story-copy p { margin-bottom: 28px; }
+  .story-copy p::before, .today::before { content: ""; position: absolute; left: -15px; top: 32px; width: 25px; height: 25px; border-left: 3px solid var(--edge); border-bottom: 3px solid var(--edge); background: var(--paper); transform: rotate(45deg); }
+
+  /* Choose and equip: metal-edged trays and inset equipment sockets. */
+  .creature-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .creature-card { --card-lip: var(--navy-deep); min-width: 0; padding: 22px; border: 4px solid var(--edge); border-radius: 24px; background: var(--sky-soft); box-shadow: 0 7px 0 var(--card-lip), inset 0 0 0 5px #fff; cursor: pointer; transition: transform 150ms, box-shadow 150ms; }
+  .creature-card:nth-child(2) { background: #e5f9c9; }
+  .creature-card:nth-child(3) { background: var(--panel); }
+  .creature-card img { display: block; width: 100%; height: 275px; margin-bottom: 18px; border: 3px solid var(--edge); border-radius: 50% 50% 16px 16px; object-fit: cover; }
+  .creature-card h2 { font-size: 32px; margin-bottom: 8px; }
+  .creature-card p { margin: 0; color: var(--muted); font-size: 17px; text-wrap: balance; }
+  .creature-card:hover { transform: translateY(-4px); }
+  .creature-card:active { transform: translateY(6px); box-shadow: 0 1px 0 var(--card-lip); }
+  .card-row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .card { --card-lip: var(--card-line); position: relative; min-width: 0; padding: 13px 17px; border: 3px solid var(--card-line); border-radius: 16px; color: var(--ink); background: var(--paper); box-shadow: 0 4px 0 var(--card-lip), inset 0 2px 0 #fff; transition: transform 120ms, box-shadow 120ms; }
+  .card[role="button"] { cursor: pointer; }
+  .card[role="button"]:hover { background: var(--sky-soft); transform: translateY(-2px); }
+  .card[role="button"]:active { transform: translateY(4px); box-shadow: 0 0 0 var(--card-lip); }
+  .card.selected { --card-lip: var(--accent); border-color: var(--accent); background: var(--selected); padding-left: 40px; }
+  .card.selected::after { content: ""; position: absolute; left: 15px; top: calc(50% - 7px); width: 12px; height: 8px; border-left: 3px solid var(--accent); border-bottom: 3px solid var(--accent); transform: rotate(-45deg); }
+  .card.selected:hover { background: var(--selected); }
+
+  /* Animal art reaches lower than the old blob: lift the figure so the feet stand in the ring. */
+  .creature-figure { position: relative; isolation: isolate; display: block; width: 100%; aspect-ratio: 1 / 1.12; }
+  /* Creature art ships with a transparent background, so no trimming here. */
+  .creature-figure__body {
+    position: absolute; top: -36%; left: 0; width: 100%; height: auto;
+  }
+  /* The creature just put on a new part: a small hop, anchored at the feet. */
+  .creature-figure__body--new { transform-origin: 50% 90%; animation: outfit-pop 480ms cubic-bezier(.2,.7,.3,1) both; }
+  @keyframes outfit-pop {
+    0% { scale: .92; translate: 0 4px; }
+    60% { scale: 1.05; translate: 0 -4px; }
+    100% { scale: 1; translate: 0 0; }
+  }
+  .creature-portrait { width: min(180px, 46vw); margin: 32px auto 16px; }
+
+
+  /* Victory is a small stage: cloth banner, three entrance stars, real medals. */
+  #scene-takeaway { max-width: 1020px; min-height: calc(100svh - 64px - var(--hud-space)); display: grid; align-content: center; justify-items: center; gap: 28px; padding: 36px 8px; text-align: center; }
+  #scene-takeaway .story-copy, #scene-takeaway .card-row, #scene-takeaway #takeaway-feedback { width: 100%; text-align: left; }
+  #scene-takeaway .card-row { justify-content: center; }
+  #takeaway-feedback { scroll-margin-block: 18px; }
+  #scene-takeaway > button { scroll-margin-bottom: 140px; } /* clear of the caption bar */
+  #takeaway-reply { padding: 20px; border: 3px solid var(--green-line); border-radius: 16px; background: var(--selected); }
+  #takeaway-reply.postmortem-reply--miss { border-color: var(--amber-line); background: var(--gold-pale); }
+  .reward-celebration { position: relative; isolation: isolate; width: 100%; padding: 0 32px 30px; border: 4px solid var(--edge); border-radius: 28px; background: var(--panel); box-shadow: var(--shadow), inset 0 0 0 6px var(--gold-soft); }
+  .reward-celebration > h1 { margin: -24px auto 0; padding: 10px 44px; font-size: 48px; transform: rotate(-2deg); }
+  .reward-stars { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 22px auto 0; }
+  .reward-stars .game-icon { width: 48px; height: 48px; filter: drop-shadow(0 4px 0 #a06118); animation: star-pop 500ms cubic-bezier(.2,.8,.2,1.4) both; }
+  .reward-stars .game-icon:nth-child(2) { width: 68px; height: 68px; margin-top: -18px; animation-delay: 130ms; }
+  .reward-stars .game-icon:nth-child(3) { animation-delay: 260ms; }
+  .reward-companion { grid-column: 1; grid-row: 1; min-width: 0; }
+  .reward-companion .creature-portrait { position: relative; isolation: isolate; width: 230px; margin: 0 auto 20px; animation: companion-arrive 550ms ease-out both; }
+  .reward-companion .creature-portrait::before { content: ""; position: absolute; z-index: -1; inset: -36px; border-radius: 50%; background: repeating-conic-gradient(from -12deg, #ffc72e 0deg 13deg, transparent 13deg 30deg); mask-image: radial-gradient(circle, #000 30%, transparent 70%); }
+  .reward-companion .creature-portrait::after { content: ""; position: absolute; z-index: -1; inset: auto 5% -4px; height: 24px; border: 2px solid #91a94d; border-radius: 50%; background: #bbd769; box-shadow: 0 4px 0 #779748; }
+  .reward-companion p { position: relative; max-width: 340px; margin: auto; padding: 14px; border: 2px solid var(--wood); border-radius: 16px; background: var(--paper); font-size: 18px; text-wrap: balance; }
+  @keyframes star-pop { from { opacity: 0; transform: scale(.15) rotate(-20deg); } to { opacity: 1; transform: none; } }
+  @keyframes companion-arrive { from { opacity: 0; transform: translateY(14px) scale(.94); } to { opacity: 1; transform: none; } }
+
+  /* Level select is the world itself, with flags planted along a winding route. */
+  #scene-course { position: relative; isolation: isolate; max-width: none; min-height: max(800px, 100svh); }
+  .course-hud { position: absolute; z-index: 4; top: 24px; left: 3%; right: 3%; display: flex; align-items: center; justify-content: space-between; gap: 20px; pointer-events: none; }
+  .course__title { display: flex; align-items: center; gap: 12px; margin: 0; font-size: 32px; }
+  .course__title .game-icon { width: 34px; height: 34px; color: var(--gold-soft); }
+  .home-hero { position: absolute; z-index: 3; left: 3%; bottom: 28px; width: min(600px, 65%); display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 20px; }
+  .home-companion { min-width: 0; }
+  .home-creature { position: relative; isolation: isolate; width: 150px; max-width: 100%; margin: auto; filter: drop-shadow(0 6px 6px #1f3b4c55); }
+  /* Before a creature is picked, the helper waits at home in its place. */
+  .home-helper { display: block; width: 100%; height: auto; }
+  .home-creature::after { content: ""; position: absolute; z-index: -1; bottom: -3px; left: 5%; width: 90%; height: 22px; border-radius: 50%; background: #3b713c66; }
+  .home-caption { position: relative; margin: 8px auto 0; padding: 6px 10px; border: 2px solid var(--green-line); border-radius: 12px; background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 900; text-align: center; }
+  .today { min-width: 0; padding: 18px 20px; border-radius: 20px; }
+  .today::before { top: 65px; }
+  .today__label { display: inline-block; margin-bottom: 8px; padding: 4px 9px; border-radius: 8px; background: var(--gold-soft); color: var(--wood); font-size: 14px; font-weight: 900; }
+  .today h2 { margin-bottom: 16px; font-size: 28px; line-height: 1.12; }
+  .today h2:last-child { margin-bottom: 0; }
+  .today button { width: 100%; padding: 12px 14px; font-size: 17px; }
+  .course { position: absolute; z-index: 1; inset: 0; pointer-events: none; }
+  .course-tile { position: absolute; width: 144px; left: var(--x); top: var(--y); transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 9px; pointer-events: auto; text-align: center; }
+  .course-tile[role="button"] { cursor: pointer; border-radius: 14px; }
+  .home-jar { --lip: var(--amber-line); display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 6px 14px; border-color: var(--amber-line); background: var(--gold-pale); color: var(--ink); font-size: 24px; pointer-events: auto; }
+  .home-jar span { font-size: 18px; }
+  .course-tile__n { position: relative; display: grid; place-items: center; width: 65px; height: 55px; border: 3px solid var(--navy-deep); border-radius: 9px 12px 12px 4px; background: #386b88; color: #fff; line-height: 1; box-shadow: 0 4px 0 var(--navy-deep), inset 0 3px 0 #ffffff55; }
+  .course-tile__n .game-icon { width: 34px; height: 34px; stroke-width: 2.2; }
+  .course-tile__n::before { content: ""; position: absolute; z-index: -1; left: -3px; top: 100%; width: 8px; height: 30px; border: 2px solid #594423; background: #f1c779; }
+  .course-tile__n::after { content: ""; position: absolute; left: calc(100% - 3px); top: 7px; width: 22px; height: 38px; background: var(--navy-deep); clip-path: polygon(0 0,100% 0,68% 50%,100% 100%,0 100%); }
+  .course-tile__plaque { width: 100%; padding: 8px 7px; border: 3px solid var(--navy-deep); border-radius: 13px; background: var(--surface); box-shadow: 0 4px 0 var(--navy-deep), inset 0 0 0 2px #fff; }
+  .course-tile h2 { margin: 0; color: var(--ink); font-size: 16px; line-height: 1.14; }
+  .course-tile p { margin: 3px 0 0; color: var(--locked-ink); font-size: 13px; }
+  .course-tile__status { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 24px; margin-top: 5px; padding: 2px 10px; border-radius: 7px; color: var(--locked-ink); background: var(--locked-soft); font-size: 13px; font-weight: 900; }
+  .course-tile__status .game-icon { width: 18px; height: 18px; }
+  .course-tile:not(.course-tile--locked):not(.course-tile--done) .course-tile__n { background: var(--orange-bright); border-color: var(--orange-deep); box-shadow: 0 4px 0 var(--orange-deep), 0 0 0 5px var(--gold-pale), 0 0 24px 12px #ffd85699; animation: quest-bounce 2.2s ease-in-out infinite; }
+  .course-tile:not(.course-tile--locked):not(.course-tile--done) .course-tile__n::after { background: var(--orange); }
+  .course-tile:not(.course-tile--locked):not(.course-tile--done) .course-tile__plaque { border-color: var(--wood); box-shadow: 0 4px 0 var(--wood), 0 0 0 3px var(--gold-soft); }
+  .course-tile:not(.course-tile--locked):not(.course-tile--done) .course-tile__status { background: var(--accent); color: #fff; }
+  .course-tile:not(.course-tile--locked):not(.course-tile--done) .course-tile__status::before { content: ""; border-block: 5px solid transparent; border-left: 7px solid currentColor; }
+  .course-tile[role="button"]:hover .course-tile__plaque { background: #fff; outline: 3px solid var(--gold-soft); }
+  .course-tile[role="button"]:active .course-tile__plaque { translate: 0 4px; box-shadow: none; }
+  .course-tile--done .course-tile__n { background: var(--accent); border-color: var(--accent-deep); }
+  .course-tile--done .course-tile__n::after { background: var(--accent-deep); }
+  .course-tile--done .course-tile__status { color: var(--accent); background: var(--selected); }
+  .course-tile--done .course-tile__status::before { content: ""; width: 10px; height: 7px; margin-bottom: 3px; border-left: 3px solid currentColor; border-bottom: 3px solid currentColor; transform: rotate(-45deg); }
+  .course-tile__star { position: absolute; top: -19px; left: calc(50% + 17px); filter: drop-shadow(0 2px 0 #fff2be); }
+  .course-tile__star .game-icon { width: 33px; height: 33px; }
+  .course-tile--locked .course-tile__plaque { background: var(--locked-soft); }
+  .course-tile--locked .course-tile__n { background: var(--locked-deep); }
+  @keyframes quest-bounce { 0%, 75%, 100% { translate: 0 0; } 35% { translate: 0 -7px; } }
+  @media (max-width: 900px) {
+    .wrap { padding: 24px; }
+    .creature-card { padding: 16px; }
+    .creature-card img { height: 220px; }
+    /* Phones get a tall village of their own; the flags stand on its places and the path is in the art. */
+    body:has(#scene-course:not([hidden]))::before { background-image: var(--phone-art); filter: blur(5px) saturate(1.15) brightness(.87); }
+    #scene-course { min-height: 100svh; }
+    .course-hud { position: relative; top: auto; left: auto; right: auto; margin: 0; padding: 20px 24px; }
+    .course__title { font-size: 28px; }
+    .home-hero { position: relative; left: auto; bottom: auto; width: min(620px, calc(100% - 48px)); margin: 40px auto; grid-template-columns: 150px minmax(0, 1fr); }
+    .course { position: relative; inset: auto; width: min(520px, 100%); margin: auto; aspect-ratio: 2 / 3; background: var(--phone-art) center / cover no-repeat; mask-image: linear-gradient(transparent, #000 5%); }
+    .course-tile { left: 3%; top: var(--py); width: calc(var(--px) - 3%); transform: translateY(-50%); flex-direction: row-reverse; gap: 4px; text-align: left; }
+    .course-tile__plaque { flex: 1; min-width: 0; }
+    .course-tile__n { flex: none; width: 52px; height: 46px; }
+    .course-tile__n .game-icon { width: 28px; height: 28px; }
+    .course-tile__n::before { height: 18px; }
+    .course-tile__n::after { height: 32px; }
+    .course-tile__plaque { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 6px; padding: 6px 8px; }
+    .course-tile h2 { grid-column: 1 / -1; font-size: 15px; }
+    .course-tile p { margin: 0; font-size: 12px; }
+    .course-tile__status { min-height: 22px; margin: 0; padding: 1px 8px; font-size: 13px; }
+  }
+  @media (max-width: 600px) {
+    body { font-size: 17px; }
+    .wrap { padding: 24px 16px; }
+    h1 { font-size: 34px; }
+    h2 { font-size: 23px; }
+    button { padding: 14px 18px; }
+    .ribbon { padding: 12px 16px; }
+    .story-copy h1 { font-size: 36px; padding: 14px; margin: 0 0 22px; text-align: center; -webkit-text-stroke-width: 2px; }
+    .story-copy p { padding: 20px; margin-bottom: 24px; font-size: 20px; }
+    .story-copy p::before { top: -15px; left: calc(50% - 12px); transform: rotate(135deg); }
+    .story-copy button { width: 100%; }
+    .creature-cards { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .creature-card { display: grid; grid-template-columns: 95px minmax(0, 1fr); gap: 5px 18px; align-items: center; padding: 16px; text-align: left; }
+    .creature-card img { width: 95px; height: 134px; grid-row: 1 / 3; margin: 0; }
+    .creature-card h2 { align-self: end; margin: 0; font-size: 26px; }
+    .creature-card p { align-self: start; font-size: 16px; }
+    .card { padding: 12px 14px; font-size: 17px; }
+    .level-steps { gap: 8px; padding: 8px 12px; }
+    .level-steps__pips { gap: 4px; }
+    .level-steps__pips i { width: 12px; height: 12px; }
+    .level-steps__pips i.is-current { width: 22px; }
+    #scene-takeaway { padding: 24px 0 8px; gap: 26px; }
+    .reward-celebration { padding: 0 18px 24px; }
+    .reward-celebration > h1 { font-size: 38px; padding: 10px 24px; }
+    .reward-stars { margin-top: 24px; }
+    .reward-stars .game-icon { width: 36px; height: 36px; }
+    .reward-stars .game-icon:nth-child(2) { width: 52px; height: 52px; }
+    .reward-companion .creature-portrait { width: 175px; margin-bottom: 20px; }
+    .reward-companion p { padding: 12px; font-size: 17px; }
+    #scene-takeaway > button { width: 100%; }
+    .course-hud { padding: 16px; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .course__title { padding: 10px 20px; font-size: 28px; }
+    .home-hero { width: calc(100% - 32px); margin: 18px auto 36px; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; }
+    .home-creature { width: 110px; }
+    .home-caption { padding: 6px; font-size: 14px; }
+    .today { padding: 16px 13px; border-radius: 18px; }
+    .today::before { top: 72px; }
+    .today__label { padding: 4px 6px; font-size: 13px; }
+    .today h2 { font-size: 25px; margin-bottom: 16px; }
+    .today button { padding: 12px 10px; font-size: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+  .voice-caption { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 8; display: flex; align-items: center; gap: 12px; max-width: 720px; margin: 0 auto; padding: 10px 14px; border: 3px solid var(--navy-deep); border-radius: 18px; background: var(--paper); box-shadow: 0 4px 0 var(--navy-deep); }
+  .voice-caption[hidden] { display: none; }
+  .voice-caption__replay { --lip: var(--navy-deep); min-width: 56px; min-height: 56px; padding: 0; border-color: var(--navy-deep); background: var(--sky-soft); color: var(--ink); font-size: 26px; }
+  .voice-caption__text { margin: 0; font-size: 20px; }
+  /* Bridge */
+  .bridge-scene { --dot: 30px; display: grid; justify-items: center; gap: 24px; padding-bottom: 180px; }
+  .bridge-helper img { width: min(200px, 45vw); height: auto; }
+  .bridge-helper--small img { width: 120px; }
+  .bridge-big { width: 96px; height: 96px; min-height: 0; padding: 0; border-radius: 50%; font-size: 44px; }
+  .bridge-stage { --bg-x: 50%; position: relative; width: 100%; max-width: 900px; display: grid; gap: 20px; padding: 20px; border: 4px solid var(--navy-deep); border-radius: 28px; background: url(assets/scene-bridge.webp) var(--bg-x) center / cover; box-shadow: var(--shadow); transition: background-image 400ms ease-out; }
+  .bridge-stage:not(.bridge-stage--story) { padding-top: 150px; overflow: clip; } /* room for the far end of the bridge, where the creature waits; painted spots past the frame stay inside */
+  .bridge-stage.is-crossing { background-image: url(assets/scene-bridge-whole.webp); } /* the mended hole makes the painted bridge whole */
+  /* One star per mended hole; the stage picture is busy, so the row and the sum sit on paper. */
+  .bridge-stars { display: flex; justify-content: center; gap: 6px; margin-bottom: -8px; padding: 2px 16px; border: 3px solid var(--navy-deep); border-radius: 999px; background: var(--paper); box-shadow: 0 4px 0 var(--navy-deep); }
+  .bridge-stars i { font-size: 32px; font-style: normal; line-height: 1.2; color: #cfd8dc; }
+  .bridge-stars .is-won { color: var(--gold); -webkit-text-stroke: 1.5px #86530b; }
+  .bridge-stars .is-new { animation: bridge-star 500ms cubic-bezier(.2,.8,.2,1); }
+  @keyframes bridge-star { 0% { scale: 0; } 60% { scale: 1.3; } 100% { scale: 1; } }
+  .bridge-bank { display: flex; flex-wrap: wrap; justify-content: center; align-items: end; gap: 14px; min-height: 90px; }
+  /* The creature and the helper stand on painted spots, placed by bridgePlaceFigures() with their feet at left/top. */
+  .bridge-bank--far, .bridge-host { position: absolute; z-index: 2; display: block; min-height: 0; translate: -50% -100%; pointer-events: none; } /* a tap on the hole under them still lands */
+  .bridge-bank--far { z-index: 0; } /* stands behind the game: the gap box covers its feet */
+  .bridge-bank--far .creature-figure { width: 100%; transform-origin: 50% 100%; }
+  .bridge-host { height: auto; opacity: 0; }
+  .bridge-stage.is-crossing .bridge-host { opacity: 1; transition: opacity 300ms ease-out 450ms; }
+  /* At rest the creature breathes and sways, anchored at its feet; bridgeHop() takes over on a crossing. */
+  .bridge-bank--far .creature-figure__body { transform-origin: 50% 100%; }
+  .bridge-stage:not(.is-crossing) .bridge-bank--far .creature-figure__body { animation: bridge-breathe 2.4s ease-in-out infinite, bridge-sway 4.8s ease-in-out infinite; }
+  @keyframes bridge-breathe { 50% { scale: .985 1.03; } }
+  @keyframes bridge-sway { 25% { rotate: -1.5deg; } 75% { rotate: 1.5deg; } }
+  .bridge-plank.is-placed { visibility: hidden; }
+  .bridge-gap { position: relative; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; min-height: 76px; padding: 12px; border: 3px dashed #6b4a2b; border-radius: 18px; background: #3c7fa8; }
+  .bridge-spot { width: var(--dot); height: var(--dot); border: 3px dashed #ffffffb0; border-radius: 50%; }
+  .bridge-stage.is-crossing .bridge-spot { border: 3px solid #8a5a32; background: #e9c894; } /* the hole reads as mended wood */
+  /* Once the hole reads as mended, the boxes step aside so the whole painted bridge and the party show. */
+  .bridge-stage.is-crossing :is(.bridge-gap, .bridge-sum, .bridge-bank--near) { opacity: 0; transition: opacity 300ms ease-out 450ms; }
+  .bridge-seg, .bridge-plank { --lip: #8a5a32; min-height: 0; padding: 6px; border: 3px solid #8a5a32; border-radius: 14px; background: #e9c894; color: #4a2f18; box-shadow: 0 4px 0 var(--lip); }
+  .bridge-seg--fixed { opacity: .85; box-shadow: none; }
+  .bridge-seg, .bridge-plank { display: grid; justify-items: center; gap: 4px; }
+  .bridge-dots { display: grid; gap: 4px; }
+  .bridge-num { font-size: 28px; line-height: 1; }
+  .bridge-sum { justify-self: center; margin: 4px 0 0; padding: 0 20px; border: 3px solid var(--navy-deep); border-radius: 18px; background: var(--paper); text-align: center; font-size: 40px; font-weight: 800; color: var(--navy-deep); }
+  .bridge-dots i { width: var(--dot); height: var(--dot); border-radius: 50%; background: #6b4a2b; }
+  .bridge-plank { touch-action: none; cursor: grab; }
+  .bridge-plank.is-bounce { animation: bridge-bounce 600ms ease-out; }
+  @keyframes bridge-bounce { 30% { translate: 0 -40px; rotate: -4deg; } 100% { translate: 0 0; rotate: 0deg; } }
+  #scene-bridge-river.is-paused .bridge-plank { pointer-events: none; opacity: .55; }
+  #scene-bridge-river.is-paused .bridge-spot { border-color: var(--gold); box-shadow: 0 0 12px var(--gold); }
+  .is-pointable { outline: 4px solid var(--gold); outline-offset: 4px; }
+  .bridge-ask { position: fixed; right: 16px; bottom: 96px; z-index: 6; width: 80px; height: 80px; min-height: 0; padding: 0; border-radius: 50%; font-size: 40px; }
+  .bridge-panel { position: fixed; left: 16px; right: 16px; bottom: 96px; z-index: 7; max-width: 720px; margin: 0 auto; padding: 16px; border: 4px solid var(--navy-deep); border-radius: 24px; background: var(--paper); box-shadow: var(--shadow); }
+  .bridge-panel[hidden] { display: none; }
+  .bridge-panel.bridge-cards { width: auto; }
+  .bridge-cards, .bridge-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; width: 100%; max-width: 720px; }
+  .bridge-card { display: flex; gap: 8px; }
+  .bridge-card__pick { flex: 1; display: grid; justify-items: center; gap: 6px; }
+  .bridge-card__pick span { font-size: 40px; }
+  .bridge-card__hear { flex: none; --lip: var(--navy-deep); min-width: 56px; padding: 0; border-color: var(--navy-deep); background: var(--sky-soft); color: var(--ink); font-size: 26px; }
+  .bridge-card.is-picked .bridge-card__pick { outline: 4px solid var(--gold); outline-offset: 3px; }
+  .bridge-choices:has(.is-picked) .bridge-card:not(.is-picked) { opacity: .6; }
+  #scene-bridge-pick .creature-card.selected { --card-lip: var(--accent); border-color: var(--accent); transform: translateY(-4px); }
+  #scene-bridge-pick .creature-cards:has(.selected) .creature-card:not(.selected) { opacity: .6; }
+  .bridge-example__row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+  .bridge-example__row img { flex: none; width: 64px; height: 64px; }
+  .bridge-example:not([hidden]) { animation: bridge-pop 220ms cubic-bezier(.2, .8, .2, 1); }
+  @keyframes bridge-pop { from { opacity: 0; scale: .96; } }
+  .bridge-slip { display: flex; justify-content: center; gap: 24px; }
+  .bridge-slip button { width: 96px; height: 96px; min-height: 0; padding: 0; border-radius: 50%; font-size: 44px; }
+  /* Bridge story: the creature on the far bank, the helper by the party, one solid bubble at a time. */
+  .bridge-stage--story { --fig: 130px; align-content: end; aspect-ratio: 3 / 2; min-height: 360px; max-height: calc(100svh - 330px); }
+  /* The creature stands on the far end of the painted bridge (--far-x/--far-y, set by bridgePlaceFigures()), its bubble just below. */
+  .bridge-speaker--right .creature-figure { position: absolute; left: calc(var(--far-x) - var(--fig) / 2); bottom: calc(100% - var(--far-y)); }
+  .bridge-speaker--right .bridge-bubble { position: absolute; top: calc(var(--far-y) + 14px); left: var(--far-x); translate: -50% 0; width: max-content; max-width: 340px; }
+  .bridge-speaker--left { margin-left: 30%; } /* just right of the picnic, so the bubble never hides the cake */
+  .bridge-speaker { display: flex; align-items: center; gap: 14px; }
+  .bridge-speaker--right { display: contents; }
+  .bridge-speaker .creature-figure { flex: none; width: var(--fig); }
+  .bridge-speaker > img { flex: none; width: 120px; height: auto; }
+  .bridge-bubble { position: relative; max-width: 60%; margin: 0; padding: 14px 18px; border: 3px solid var(--navy-deep); border-radius: 22px; background: #fff; color: var(--ink); font-size: 20px; font-weight: 700; line-height: 1.3; box-shadow: 0 4px 0 var(--navy-deep); }
+  .bridge-bubble::after { content: ''; position: absolute; top: 50%; width: 18px; height: 18px; margin-top: -9px; border: solid var(--navy-deep); border-width: 0 0 3px 3px; background: #fff; }
+  .bridge-bubble--left::after { left: -11px; rotate: 45deg; }
+  .bridge-bubble--right::after { top: -11px; left: 50%; margin: 0 0 0 -9px; rotate: 135deg; }
+  .bridge-bubble:not([hidden]) { animation: bridge-pop 220ms cubic-bezier(.2, .8, .2, 1); }
+  .is-speaking .creature-figure, .is-speaking > img { animation: bridge-hop 420ms ease-out; }
+  @keyframes bridge-hop { 40% { translate: 0 -14px; } }
+  @media (max-width: 480px) {
+    .bridge-scene { --dot: 22px; gap: 16px; }
+    /* The river has to fit above the caption bar on a phone: a smaller creature, tighter stage and banks. */
+    .bridge-stage:not(.bridge-stage--story) { --bg-x: 40%; gap: 10px; padding: 100px 12px 12px; } /* keeps the cake in frame */
+    .bridge-bank { gap: 8px; min-height: 0; }
+    .bridge-gap { min-height: 0; padding: 8px; }
+    .bridge-sum { font-size: 32px; }
+    #scene-bridge-pick .creature-cards { gap: 12px; }
+    .bridge-cards, .bridge-choices { grid-template-columns: 1fr; gap: 8px; }
+    .bridge-card__pick { grid-auto-flow: column; justify-content: start; align-items: center; gap: 12px; padding: 8px 16px; text-align: left; }
+    .bridge-card__pick span { font-size: 32px; }
+    .bridge-stage--story { --bg-x: 30%; --fig: 100px; aspect-ratio: auto; min-height: min(60vh, calc(100svh - 330px)); } /* keeps the cake and the gap in frame */
+    .bridge-speaker--left { margin-left: 0; }
+    .bridge-speaker { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .bridge-speaker--left { flex-direction: column-reverse; }
+    .bridge-speaker > img { width: 100px; }
+    .bridge-bubble { align-self: stretch; max-width: none; }
+    .bridge-bubble::after { top: auto; margin-top: 0; }
+    .bridge-speaker--right .bridge-bubble { left: 12px; right: 12px; translate: none; width: auto; max-width: none; }
+    .bridge-bubble--right::after { top: -11px; left: calc(var(--far-x) - 25px); margin-left: 0; }
+    .bridge-bubble--left::after { bottom: -11px; left: 40px; rotate: -45deg; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bridge-plank.is-bounce { animation: none; }
+    .bridge-stars .is-new, .bridge-bank--far .creature-figure__body { animation: none; }
+    .bridge-example:not([hidden]) { animation: none; }
+    .bridge-bubble:not([hidden]), .is-speaking .creature-figure, .is-speaking > img { animation: none; }
+  }
+</style>
+
+<div class="wrap">
+  <nav class="level-hud" id="level-hud" hidden></nav>
+  <section class="scene" id="scene-course"></section>
+  <section class="scene bridge-scene" id="scene-bridge-hello" hidden></section>
+  <section class="scene bridge-scene" id="scene-bridge-pick" hidden></section>
+  <section class="scene bridge-scene" id="scene-bridge-story" hidden></section>
+  <section class="scene bridge-scene" id="scene-bridge-river" hidden></section>
+  <section class="scene bridge-scene" id="scene-bridge-strategy" hidden></section>
+  <section class="scene bridge-scene" id="scene-bridge-reward" hidden></section>
+  <section class="scene" id="scene-takeaway" hidden></section>
+  <div class="voice-caption" id="voice-caption" hidden>
+    <button type="button" class="voice-caption__replay" onclick="voice.replay()">🔊</button>
+    <p class="voice-caption__text" aria-live="polite"></p>
+  </div>
+</div>
+
+<script src="world.js"></script>
+<script src="content.en.js"></script>
+<script src="voice/manifest.js"></script>
+<script src="levels/bridge-sim.js"></script>
+<script src="engine.js"></script>
+<script src="levels/bridge.js"></script>
+<script>
+  renderCourseMap();
+</script>

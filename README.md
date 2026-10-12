@@ -62,5 +62,8 @@ Contact: [Telegram](https://t.me/GodsLikesMe)
 
 ## This repo
 
-Holds the built page. The APK is built by `.github/workflows/apk.yml` with
+`index.html` is the built page served on GitHub Pages. The source is in `src/`: the game
+engine and Fix the Bridge level (`src/demo/`, tests: `node --test src/demo/level.test.js
+src/demo/levels/*.test.js`), the Parents area with Sign-In-With-Solana and the build script
+(`src/app/`). Art is not included; it ships inside the built page. The APK is built by `.github/workflows/apk.yml` with
 `solana-mobile webshell`, which wraps the page in a native Android WebView.

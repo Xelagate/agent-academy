@@ -1,0 +1,133 @@
+// demo/content.en.js — every user-visible English string, keyed by role/place ids, never by cast
+// names. A reskin swaps this file (and world.js), not the engine or level scene files.
+
+// The helper's lines for Fix the Bridge. Each is spoken (the voice file named by its id) and shown as a caption.
+// A line that says the creature's name has one version per creature, voiced as "<id>.<creature>".
+const BRIDGE_SAY = {
+  hello: 'Hi! I’m a computer helper.',
+  grownUpSees: 'Your grown-up can see what you ask me.',
+  pickFriend: 'Who is coming to the party? Tap one.',
+  storyCreature: { blue: 'The bridge is broken! I want to come to the party.', green: 'The bridge is broken! I want to come to the party.', amber: 'The bridge is broken! I want to come to the party.' },
+  storyHelper: 'Let’s fix the bridge. Every fix gets a star!',
+  name: { blue: 'Jay!', green: 'Hush!', amber: 'Benny!' },
+  fillGap: { blue: 'Fix the bridge so Jay can come.', green: 'Fix the bridge so Hush can come.', amber: 'Fix the bridge so Benny can come.' },
+  bridgeStill: { blue: 'Jay’s bridge is still standing!', green: 'Hush’s bridge is still standing!', amber: 'Benny’s bridge is still standing!' },
+  tooBig: 'Too big. It sticks out.',
+  lookFirst: 'Let’s look before we try.',
+  solved: 'You filled the whole hole. Here’s a star!',
+  slip: 'Three and two makes six?',
+  caught: 'You caught my mistake!',
+  countTogether: 'Let’s count. Three, four, five. Five, not six.',
+  alwaysCheck: 'Always check what a helper says.',
+  howDid: 'How did you do it? Tap one.',
+  together: 'Let’s do one together first.',
+  slowDown: 'Let’s slow down. We’ll do it together.',
+  shortOne: 'Here’s a small one. You can do it.',
+  nowYou: 'Now you try yours.',
+  exampleFour: 'Four spots. Three dots, then one more. Full!',
+  exampleEight: 'Eight spots. Five dots, then three more. Full!',
+  whatWith: 'Help with what? Point to it.',
+  hintCount: 'Count the empty spots.',
+  hintMatch: 'Find a plank with that many dots.',
+  hintPlank: 'Count its dots. Will they fill the hole?',
+  tryFirst: 'Try a plank first. Then ask me again.',
+  grownUp: 'Good question! That’s one for a grown-up. Into your jar!',
+  offerHelp: 'Stuck? Tap the hand to ask me.',
+  askHow: 'How do you want to ask?',
+  cardTell: 'Just tell me!',
+  cardHelp: 'Help!',
+  cardWhich: 'Which plank fits the hole?',
+  cardWhy: 'Why is water wet?',
+  labelDots: 'I counted the dots.',
+  labelSpots: 'I looked at the empty spots.',
+  labelTried: 'I tried planks.',
+  stratDots: 'You counted the dots. That’s how you knew.',
+  stratSpots: 'You looked at the empty spots first.',
+  stratTried: 'You tried planks and checked each one.',
+  reward: { blue: 'Jay made it to the party! Here’s a satchel for Jay!', green: 'Hush made it to the party! Here’s a satchel for Hush!', amber: 'Benny made it to the party! Here’s a satchel for Benny!' },
+  tkLesson: 'The clearer you ask, the better the help.',
+  tkQuestion: 'Which way gets you good help?',
+  tkReply0: 'Pushing slows things down. Ask clearly instead.',
+  tkReply1: 'Yes! A clear question gets clear help.',
+  tkReply2: 'A helper can’t guess. Ask it something.',
+  jarAsk: 'Ask a grown-up:',
+};
+
+const CONTENT = {
+  pageTitle: 'Hintville',
+  ui: {
+    replay: 'Say it again',
+    backToMap: 'Map',
+    stepOf: (place, n, total) => `${place}: step ${n} of ${total}`,
+  },
+
+  creatures: {
+    blue:  { name: 'Jay', alt: 'Jay, a little blue kingfisher' },
+    green: { name: 'Hush', alt: 'Hush, a little green hedgehog' },
+    amber: { name: 'Benny', alt: 'Benny, a little beaver' },
+  },
+
+  course: {
+    title: 'Hintville',
+    helperHello: 'Hi! I’m your helper.',
+    todayLabel: 'Today someone needs help',
+    helpWith: (title) => `Help with “${title}”`,
+    allDoneLabel: 'You helped everyone today!',
+    allDoneBody: 'Tap the bridge to play again.',
+    done: 'Done',
+    play: 'Play',
+    locked: 'Locked',
+    jarLabel: (n) => `Questions for a grown-up: ${n}`,
+    tiles: {
+      bridge: { title: 'Fix the Bridge', topic: 'Adding to 5', need: 'Your friend can’t get to the party.' },
+      shop:   { title: 'The Mouse’s Shop', topic: 'Tens and ones' },
+      garden: { title: 'The Mole’s Garden', topic: 'Taking away' },
+    },
+  },
+
+    bridge: {
+    say: BRIDGE_SAY,
+    cards: [
+      { id: 'tell', icon: '😤', line: 'cardTell' },
+      { id: 'help', icon: '😟', line: 'cardHelp' },
+      { id: 'which', icon: '🪵', line: 'cardWhich' },
+      { id: 'why', icon: '💧', line: 'cardWhy' },
+    ],
+    strategies: [
+      { id: 'dots', icon: '🔵', line: 'labelDots' },
+      { id: 'spots', icon: '⭕', line: 'labelSpots' },
+      { id: 'tried', icon: '🔁', line: 'labelTried' },
+    ],
+    jar: { waterWet: { text: BRIDGE_SAY.cardWhy, line: 'cardWhy' } },
+    ui: {
+      hi: 'Say hi',
+      next: 'Next',
+      confirm: 'That one',
+      ask: 'Ask the helper',
+      hear: 'Hear it',
+      gap: 'The gap',
+      plank: (n) => `Plank with ${n} dots`,
+      takeBack: (n) => `Take back the plank with ${n} dots`,
+      slipNo: 'Not right',
+      slipYes: 'Right',
+      helperAlt: 'The computer helper, a small robot in a penguin onesie',
+    },
+    reward: { heading: 'You did it!' },
+    takeaway: {
+      heading: 'What you learned',
+      lesson: BRIDGE_SAY.tkLesson,
+      bridge: 'Real AI helpers work the same way.',
+      question: BRIDGE_SAY.tkQuestion,
+      answers: [
+        { text: '😤 “Tell me now!”', reply: BRIDGE_SAY.tkReply0, correct: false },
+        { text: '🙋 “Which plank fits?”', reply: BRIDGE_SAY.tkReply1, correct: true },
+        { text: '🤐 Say nothing', reply: BRIDGE_SAY.tkReply2, correct: false },
+      ],
+      voice: { intro: ['tkLesson', 'tkQuestion'], replies: ['tkReply0', 'tkReply1', 'tkReply2'] },
+      cta: 'What did you learn?',
+      back: 'Back to the course map',
+    },
+  },
+};
+
+if (typeof module !== 'undefined') module.exports = CONTENT;

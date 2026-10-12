@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "description": "Seeker build of the English demo: parent gate + offline shell",
+  "dependencies": {
+    "@solana-mobile/wallet-standard-mobile": "0.6.0",
+    "@wallet-standard/app": "1.1.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

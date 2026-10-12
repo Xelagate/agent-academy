@@ -1,0 +1,779 @@
+<title>Зниклий кіт — рівень 1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f5f1e6; --ink: #343e32; --muted: #636b5c; --accent: #446950;
+    --surface: #fffcf4; --soft: #ebeede; --selected: #dcebcf; --edge: #d5d9c5;
+    --button-ink: #fffdf5; --warn: #a13e25; --warn-soft: #ffe1c8;
+    --gold: #f5d68f; --shadow: 0 12px 32px #46503b12, 0 3px 0 #46503b0c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #1d2926; --ink: #f7efdf; --muted: #c0cabb; --accent: #b8d6a7;
+      --surface: #2b3932; --soft: #33463a; --selected: #40583e; --edge: #52644e;
+      --button-ink: #223328; --warn: #ffc19e; --warn-soft: #543a2d;
+      --gold: #6a5732; --shadow: 0 12px 32px #0b171b30, 0 3px 0 #0b171b24;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #1d2926; --ink: #f7efdf; --muted: #c0cabb; --accent: #b8d6a7;
+    --surface: #2b3932; --soft: #33463a; --selected: #40583e; --edge: #52644e;
+    --button-ink: #223328; --warn: #ffc19e; --warn-soft: #543a2d;
+    --gold: #6a5732; --shadow: 0 12px 32px #0b171b30, 0 3px 0 #0b171b24;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 ui-rounded, "SF Pro Rounded", system-ui, sans-serif; }
+  .wrap { max-width: 1640px; margin: 0 auto; padding: 24px clamp(16px, 2vw, 32px); }
+  .scene { max-width: 1060px; margin: 0 auto; min-width: 0; }
+  [hidden] { display: none !important; }
+  h1 { font: 650 clamp(32px, 4.5vw, 58px)/1.08 ui-serif, Georgia, serif; letter-spacing: -0.035em; margin: 0 0 24px; text-wrap: balance; }
+  h2 { font-size: 21px; line-height: 1.3; margin: 0 0 12px; text-wrap: balance; }
+  p { margin: 0 0 20px; }
+  button, .card { font: inherit; line-height: 1.35; overflow-wrap: anywhere; }
+  button {
+    min-height: 46px; padding: 13px 22px; border: 1px solid transparent; border-radius: 18px;
+    background: var(--accent); color: var(--button-ink); font-weight: 650; cursor: pointer;
+    box-shadow: 0 4px 0 #233a2526; transition: transform 160ms, box-shadow 160ms;
+  }
+  button:hover:not(:disabled), .card:hover, .creature-card:hover { transform: translateY(-3px); }
+  button:active:not(:disabled), .card:active, .creature-card:active { transform: translateY(1px); }
+  button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+  .slot { margin-block: 0 18px; padding: 24px; border: 1px solid var(--edge); border-radius: 26px; background: var(--surface); box-shadow: var(--shadow); }
+  .slot h2 { margin-bottom: 8px; }
+  .slot p { color: var(--muted); margin-bottom: 16px; }
+  .slot p:last-child { margin-bottom: 0; }
+  .card-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .card {
+    display: inline-block; border: 1px solid var(--edge); border-radius: 15px; padding: 12px 16px;
+    background: var(--surface); color: var(--ink); box-shadow: 0 3px 0 var(--edge); cursor: pointer;
+    transition: background 160ms, transform 160ms;
+  }
+  .card.selected { border-color: var(--accent); background: var(--selected); box-shadow: 0 3px 0 var(--accent); }
+  .slot-locked { border-style: dashed; background: repeating-linear-gradient(-45deg, transparent 0 9px, var(--soft) 9px 11px); box-shadow: none; }
+  .slot-locked h2 { color: var(--muted); }
+  #scene-intro {
+    display: grid; grid-template-columns: 0.9fr 1fr; gap: 0 48px; align-content: center;
+    min-height: calc(100svh - 48px); padding: 40px 0;
+  }
+  #scene-intro > img {
+    grid-row: 1 / 4; width: 100%; height: 420px; align-self: center;
+    object-fit: cover; border: 8px solid var(--surface); border-radius: 44% 44% 28px 28px; box-shadow: var(--shadow);
+  }
+  #scene-intro h1 { align-self: end; }
+  #scene-intro p { font-size: 20px; line-height: 1.7; }
+  #scene-intro button { justify-self: start; align-self: start; }
+  #scene-pick { padding-block: 36px; text-align: center; }
+  .creature-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+  .creature-card {
+    padding: 24px; border: 1px solid var(--edge); border-radius: 32px; background: var(--surface);
+    box-shadow: var(--shadow); cursor: pointer; transition: transform 180ms;
+  }
+  .creature-card img { width: 100%; max-width: 200px; height: 270px; object-fit: cover; border-radius: 46% 46% 35% 35%; margin-bottom: 18px; }
+  .creature-card h2 { font-size: 26px; }
+  .creature-card p { color: var(--muted); margin: 0; text-wrap: balance; }
+  #scene-build { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding-block: 24px; }
+  #scene-build .slot { margin: 0; }
+  #scene-build > button { grid-column: 1 / -1; justify-self: center; margin-top: 8px; }
+
+  /* The map keeps the art's exact 3:2 geometry; every overlay uses its original coordinates. */
+  #scene-run1, #scene-run2 { max-width: none; }
+  .run-layout {
+    display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 24px;
+    max-width: calc((100svh - 144px) * 1.5 + 304px); margin: 0 auto; align-items: start;
+  }
+  .run-stage { min-width: 0; --day-progress: 0%; }
+  .run-stage > h2 { margin: 0 0 10px; }
+  .stage-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; margin-bottom: 12px; }
+  .controls { display: flex; gap: 8px; flex-shrink: 0; }
+  .controls button { background: var(--surface); color: var(--ink); border-color: var(--edge); padding: 10px 16px; min-height: 44px; border-radius: 15px; font-size: 14px; }
+  .daylight { position: relative; width: min(260px, 100%); height: 32px; min-width: 40px; margin-inline: 10px; }
+  .daylight::before { content: ""; position: absolute; left: 0; right: 0; top: 14px; height: 5px; border-radius: 5px; background: linear-gradient(90deg, #a9caba, #edcf81 45%, #dba075 75%, #797389); }
+  .daylight__ticks { position: absolute; inset: 12px 0 auto; display: flex; justify-content: space-between; }
+  .daylight__ticks i { width: 2px; height: 9px; background: var(--muted); border-radius: 2px; }
+  .daylight__sun { position: absolute; width: 28px; height: 28px; top: 2px; left: var(--day-progress); transform: translateX(-50%); color: #946b20; fill: #ffe3a0; filter: drop-shadow(0 2px 3px #6e543c33); transition: left 400ms ease; }
+  .map { position: relative; isolation: isolate; container-type: inline-size; width: 100%; aspect-ratio: 3 / 2; border-radius: 28px; overflow: hidden; background: #b9cc9a; box-shadow: var(--shadow); --warmth: 0; --shade: 0; }
+  .map > img, .map > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .map > img { object-fit: contain; }
+  .map > svg { z-index: 1; }
+  .map::before, .map::after { content: ""; position: absolute; inset: 0; pointer-events: none; transition: opacity 700ms ease; }
+  .map::before { z-index: 2; background: linear-gradient(135deg, #ffbd64, #da785035); mix-blend-mode: multiply; opacity: var(--warmth); }
+  .map::after { z-index: 2; background: linear-gradient(145deg, #403d6f22, #242744); opacity: var(--shade); }
+  .map[data-hour="10"] { --warmth: 0.05; }
+  .map[data-hour="12"] { --warmth: 0.14; }
+  .map[data-hour="14"] { --warmth: 0.28; --shade: 0.04; }
+  .map[data-hour="16"] { --warmth: 0.46; --shade: 0.13; }
+  .map[data-hour="18"] { --warmth: 0.6; --shade: 0.24; }
+  .map[data-hour="20"] { --warmth: 0.64; --shade: 0.37; }
+  .map.dusk { --warmth: 0.45; --shade: 0.56; }
+  .route { stroke: #fff9d9; stroke-width: 0.65; stroke-linecap: round; stroke-dasharray: 1 1.4; opacity: 0.85; filter: drop-shadow(0 0.15px 0.2px #344527); }
+  .route--repeat { stroke: #b44628; stroke-width: 0.9; stroke-dasharray: 1.4 1; }
+  .hotspot { position: absolute; z-index: 3; transform: translate(-50%, -16px); text-align: center; color: #4c513c; --post-height: 22px; }
+  .hotspot__dot { position: relative; display: grid; place-items: center; width: 32px; height: 32px; margin: 0 auto; border-radius: 11px 11px 5px 5px; border: 2px solid #fff8df; background: #f9ebca; box-shadow: 0 3px 0 #948866, 0 5px 10px #3c503740; }
+  .hotspot__dot::after { content: ""; position: absolute; top: 100%; left: calc(50% - 2px); width: 4px; height: var(--post-height); background: #948866; box-shadow: 1px 0 0 #fff8df; }
+  .hotspot__dot svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .hotspot__label { display: block; margin-top: var(--post-height); padding: 3px 8px; border: 1px solid #d6c49a; border-radius: 5px 9px 9px 5px; background: #fff5da; font-size: clamp(11px, 1vw, 14px); font-weight: 650; white-space: nowrap; box-shadow: 0 3px 0 #756b4e35; }
+  .hotspot.visited .hotspot__dot { color: #fffce7; background: #53725a; border-color: #e2efca; }
+  .hotspot.visited .hotspot__label { background: #dcebc8; border-color: #7e9970; color: #304b32; }
+  .hotspot.visited .hotspot__label::before { content: ""; display: inline-block; width: 7px; height: 5px; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); margin: 0 5px 3px 0; }
+  .hotspot--current .hotspot__label { outline: 2px solid #fff9e5; outline-offset: 2px; }
+  .map--repeat .hotspot--current .hotspot__label { background: #ffdbb7; color: #7b321f; border-color: #ad4d2d; }
+  .creature-marker {
+    position: absolute; z-index: 4; width: min(92px, 15cqw); aspect-ratio: 1 / 1.12;
+    transform: translate(-50%, -65%); transition: left 400ms ease, top 400ms ease; pointer-events: none;
+    filter: drop-shadow(0 3px 0 #fff6d4) drop-shadow(0 6px 5px #233b4055);
+  }
+  .creature-marker::before { content: ""; position: absolute; bottom: -2px; left: 6%; width: 88%; height: 18%; border: 2px solid #fff8dc; border-radius: 50%; background: #fff1be77; }
+  /* Trim the painted background in CSS, leaving the supplied bitmap untouched. */
+  .creature-marker img {
+    position: absolute; top: -36%; left: 0; width: 100%; height: auto;
+    clip-path: polygon(7% 61%, 9% 56%, 17% 49%, 28% 43%, 37% 38%, 46% 33%, 54% 26%, 62% 23%, 69% 21%, 77% 22%, 82% 25%, 88% 25%, 93% 27%, 94% 31%, 91% 34%, 84% 35%, 77% 33%, 76% 28%, 73% 25%, 67% 25%, 62% 28%, 60% 33%, 62% 36%, 70% 38%, 79% 43%, 86% 48%, 89% 53%, 88% 59%, 83% 65%, 76% 69%, 70% 73%, 71% 76%, 68% 79%, 60% 80%, 52% 79%, 46% 78%, 39% 80%, 26% 81%, 16% 80%, 13% 77%, 15% 73%, 12% 69%, 8% 65%);
+  }
+  .creature-marker[data-creature="blue"] img { filter: hue-rotate(0deg); }
+  .creature-marker[data-creature="green"] img { filter: hue-rotate(260deg); }
+  .creature-marker[data-creature="amber"] img { filter: hue-rotate(180deg); }
+  .map--repeat .creature-marker::before { border-color: #b34b2b; background: #ffbb7388; animation: repeat-ring 850ms ease-out 2; }
+  @keyframes repeat-ring { 50% { box-shadow: 0 0 0 12px #ffdb9b55; } }
+  .run-commentary { min-width: 0; padding-top: 60px; max-height: calc(100svh - 48px); overflow-y: auto; scrollbar-width: thin; }
+  .log { margin-block: 0 16px; max-height: 320px; overflow-y: auto; scrollbar-width: thin; }
+  .step { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; padding: 14px; border-bottom: 1px solid var(--edge); font-size: 14px; }
+  .step__time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; font-weight: 650; padding-top: 2px; }
+  .step__text { min-width: 0; overflow-wrap: anywhere; }
+  .step__note { grid-column: 2; color: var(--accent); font-size: 13px; font-weight: 650; }
+  .step__note:empty { display: none; }
+  .step--repeat { border-left: 3px solid var(--warn); }
+  .step--repeat .step__note { color: var(--warn); }
+  .live-log { display: flex; flex-direction: column; gap: 10px; max-height: min(52svh, 470px); padding: 4px; }
+  .live-log .step { flex: 0 0 auto; color: var(--muted); font-size: 13px; border: 0; padding: 10px 14px; }
+  .live-log .step:last-child {
+    grid-template-columns: 1fr; gap: 10px; padding: 20px; border: 1px solid var(--edge); border-radius: 24px 24px 24px 6px;
+    background: var(--surface); color: var(--ink); box-shadow: 0 4px 0 #46503b0c; font-size: 17px; line-height: 1.55;
+    animation: comment-arrive 250ms ease-out;
+  }
+  .live-log .step:last-child .step__time { color: var(--accent); font-size: 14px; }
+  .live-log .step:last-child .step__note { grid-column: 1; }
+  .live-log .step--repeat:last-child { background: var(--warn-soft); border-color: var(--warn); border-left-width: 5px; }
+  .live-log .step--repeat:last-child .step__note { font-size: 15px; }
+  @keyframes comment-arrive { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .ending { margin-block: 18px; padding: 20px; border: 1px solid var(--edge); border-radius: 24px; background: var(--surface); }
+  .ending p { font-weight: 650; }
+  .ending button { width: 100%; padding-inline: 12px; }
+  .log--full { max-height: none; overflow-y: visible; }
+  .run-history { border-top: 1px solid var(--edge); margin-top: 20px; padding-top: 16px; }
+  .run-history h2 { font-size: 16px; color: var(--muted); }
+  .run-history .log { max-height: 240px; overflow-y: auto; }
+  .run-history .step { font-size: 12px; padding: 10px 4px; }
+  #scene-run2 .live-log { max-height: 270px; }
+  #scene-run2 .run-commentary { padding-top: 0; }
+  #scene-postmortem { max-width: 900px; padding-block: 24px; }
+  #scene-postmortem > .card-row:has(img) { margin-block: 0 24px; }
+  #scene-postmortem .card-row img { border: 4px solid var(--surface); box-shadow: var(--shadow); }
+  #postmortem-log { background: var(--surface); border: 1px solid var(--edge); border-radius: 24px; padding: 12px; margin-bottom: 24px; }
+  #postmortem-log .step:last-child { border-bottom: 0; }
+  #scene-postmortem > .card-row:has(.card) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 24px; }
+  #postmortem-reply { padding: 20px; border-radius: 20px; background: var(--selected); }
+  #scene-reward { max-width: 850px; padding-block: 28px; text-align: center; }
+  .badges { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-block: 32px; }
+  .badge { position: relative; border: 1px solid var(--edge); border-radius: 30px; padding: 28px 24px; background: var(--surface); box-shadow: var(--shadow); opacity: 0; animation: badge-drop 650ms cubic-bezier(.2,.7,.3,1.25) forwards; }
+  .badge::before { content: ""; display: block; width: 76px; height: 76px; margin: 0 auto 22px; border: 9px double #be8c44; border-radius: 50%; background: radial-gradient(circle at 32% 25%, #fff2bd, #e8bb61 75%); box-shadow: 0 5px 0 #a1743933; }
+  .badge::after { content: ""; position: absolute; top: 49px; left: calc(50% - 17px); width: 34px; height: 34px; background: #95682d; clip-path: polygon(50% 0, 63% 34%, 100% 36%, 72% 59%, 82% 100%, 50% 77%, 18% 100%, 28% 59%, 0 36%, 37% 34%); }
+  .badge--2 { animation-delay: 0.5s; }
+  .badge--2::before { border-color: #6f956d; background: radial-gradient(circle at 32% 25%, #eef5cb, #a8c698 75%); }
+  .badge--2::after { background: #4c734f; }
+  .badge h2 { margin: 0 0 8px; font-size: 22px; }
+  .badge p { margin: 0; color: var(--muted); }
+  @keyframes badge-drop { from { opacity: 0; transform: translateY(-30px) rotate(-7deg) scale(.85); } to { opacity: 1; transform: translateY(0) rotate(0) scale(1); } }
+  .streak-hint { color: var(--muted); }
+  .leaderboard { border: 1px solid var(--edge); border-radius: 24px; padding: 12px; background: var(--surface); margin-bottom: 24px; text-align: left; }
+  .leaderboard-row { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--edge); }
+  .leaderboard-row:last-child { border-bottom: 0; }
+  .leaderboard-row--you { font-weight: 750; background: var(--selected); border-radius: 14px; }
+  .leaderboard-rank { width: 24px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .leaderboard-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .leaderboard-moves { white-space: nowrap; }
+  #scene-teaser { max-width: 640px; text-align: center; padding-block: 32px; }
+  #scene-teaser::before { content: ""; display: block; width: 160px; height: 210px; margin: 0 auto 28px; border-radius: 46% 46% 38% 38%; background: url('assets/hero.webp') center 56% / cover; box-shadow: var(--shadow); transform: rotate(-6deg); }
+  #scene-teaser .slot { padding: 32px; }
+
+  @media (max-width: 999px) {
+    .wrap { padding-block: 16px; }
+    .run-layout { display: block; max-width: 760px; }
+    .run-stage { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: 8px 12px; }
+    .map { max-width: calc((100svh - 210px) * 1.5); margin-inline: auto; border-radius: 22px; }
+    .run-commentary, #scene-run2 .run-commentary { padding-top: 4px; max-height: none; overflow: visible; }
+    .live-log, #scene-run2 .live-log { max-height: 190px; margin-bottom: 8px; }
+    .live-log .step:last-child { padding: 14px 18px; font-size: 15px; gap: 5px; }
+    .live-log .step:last-child .step__time { font-size: 12px; }
+    .ending { margin-top: 12px; }
+    .ending p { margin-bottom: 12px; }
+    .run-history .log { max-height: 210px; }
+    #scene-intro { gap: 0 28px; }
+    #scene-intro > img { height: 340px; }
+    #scene-intro p { font-size: 18px; }
+    .creature-card { padding: 18px; }
+    .creature-card img { height: 220px; }
+  }
+  @media (max-width: 600px) {
+    h1 { margin-bottom: 20px; }
+    .slot { padding: 20px; }
+    #scene-intro { grid-template-columns: 1fr; min-height: auto; padding-block: 12px; }
+    #scene-intro > img { grid-row: auto; width: 220px; height: 240px; justify-self: center; margin-bottom: 28px; }
+    #scene-intro button { width: 100%; }
+    #scene-pick { padding-block: 12px; }
+    .creature-cards { grid-template-columns: 1fr; gap: 14px; }
+    .creature-card { display: grid; grid-template-columns: 104px 1fr; gap: 4px 20px; text-align: left; align-items: center; padding: 16px; border-radius: 24px; }
+    .creature-card img { grid-row: 1 / 3; width: 104px; height: 135px; margin: 0; }
+    .creature-card h2 { align-self: end; margin: 0; font-size: 23px; }
+    .creature-card p { align-self: start; font-size: 14px; }
+    #scene-build { grid-template-columns: 1fr; padding-block: 8px; gap: 16px; }
+    #scene-build > button { width: 100%; }
+    .stage-bar { gap: 10px; margin-bottom: 8px; }
+    .controls button { padding-inline: 12px; }
+    .daylight { margin-inline: 10px; }
+    .hotspot { transform: translate(-50%, -12px); --post-height: clamp(6px, 4cqw, 24px); }
+    .hotspot__dot { width: 25px; height: 25px; border-radius: 8px 8px 4px 4px; }
+    .hotspot__dot svg { width: 17px; height: 17px; }
+    .hotspot__label { padding: 2px 5px; font-size: 10px; }
+    .hotspot.visited .hotspot__label::before { margin-right: 3px; width: 6px; }
+    #scene-postmortem { padding-block: 8px; }
+    #scene-postmortem > .card-row:has(.card) { grid-template-columns: 1fr; }
+    #postmortem-log { padding: 6px; }
+    .step { gap: 5px 10px; padding: 12px 8px; }
+    .badges { grid-template-columns: 1fr; gap: 16px; margin-block: 24px; }
+    .badge { padding: 24px; }
+    .badge::after { top: 45px; }
+    .leaderboard-row { gap: 10px; padding: 12px 8px; }
+  }
+  @media (max-height: 540px) and (min-width: 600px) and (orientation: landscape) {
+    .run-layout { display: grid; grid-template-columns: minmax(0, 1fr) 240px; max-width: calc((100svh - 134px) * 1.5 + 256px); gap: 16px; }
+    .run-stage { position: static; padding: 0; }
+    .map { max-width: none; }
+    .run-commentary, #scene-run2 .run-commentary { max-height: calc(100svh - 32px); overflow-y: auto; padding-top: 0; }
+    .stage-bar { gap: 6px; }
+    .controls button { padding-inline: 10px; }
+    .hotspot__label { font-size: 10px; padding: 2px 4px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
+  }
+</style>
+
+<div class="wrap">
+  <section class="scene" id="scene-intro"></section>
+  <section class="scene" id="scene-pick" hidden></section>
+  <section class="scene" id="scene-build" hidden></section>
+  <section class="scene" id="scene-run1" hidden></section>
+  <section class="scene" id="scene-postmortem" hidden></section>
+  <section class="scene" id="scene-run2" hidden></section>
+  <section class="scene" id="scene-reward" hidden></section>
+  <section class="scene" id="scene-teaser" hidden></section>
+</div>
+
+<script src="level.js"></script>
+<script>
+  const SCENES = ['intro', 'pick', 'build', 'run1', 'postmortem', 'run2', 'reward', 'teaser'];
+  const state = { creature: null, character: null, skills: [], memory: false, run1: null, run2: null };
+
+  function showScene(id) {
+    SCENES.forEach((name) => {
+      document.getElementById('scene-' + name).hidden = name !== id;
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // Intro scene
+  document.getElementById('scene-intro').innerHTML = `
+    <img src="assets/lesia.webp" alt="Леся, дівчинка, що загубила кота" width="120" height="120">
+    <h1>Леся загубила кота.</h1>
+    <p>«Його звати Сірко. Він сірий, смугастий і дуже впертий. Знайди його, будь ласка, до заходу сонця — потім я вже не зможу шукати.»</p>
+    <button onclick="showScene('pick')">Взятися за справу</button>
+  `;
+
+  // Pick scene
+  document.getElementById('scene-pick').innerHTML = `
+    <h1>Обери істоту</h1>
+    <div class="creature-cards">
+      <div class="creature-card" role="button" tabindex="0" onclick="state.creature='blue'; showScene('build')">
+        <img src="assets/hero.webp" alt="Істота Сойка, синього кольору" width="100" height="187" style="filter: hue-rotate(0deg);">
+        <h2>Сойка</h2>
+        <p>цікава до всього, лізе в кожен двір</p>
+      </div>
+      <div class="creature-card" role="button" tabindex="0" onclick="state.creature='green'; showScene('build')">
+        <img src="assets/hero.webp" alt="Істота Тиша, зеленого кольору" width="100" height="187" style="filter: hue-rotate(260deg);">
+        <h2>Тиша</h2>
+        <p>нічого не боїться, але й не поспішає</p>
+      </div>
+      <div class="creature-card" role="button" tabindex="0" onclick="state.creature='amber'; showScene('build')">
+        <img src="assets/hero.webp" alt="Істота Бурштин, бурштинового кольору" width="100" height="187" style="filter: hue-rotate(180deg);">
+        <h2>Бурштин</h2>
+        <p>любить, коли все за правилами</p>
+      </div>
+    </div>
+  `;
+
+  // Build scene
+  const CHARACTERS = [
+    { id: 'polite', ua: 'Ввічлива' },
+    { id: 'stubborn', ua: 'Наполеглива' },
+    { id: 'quiet', ua: 'Тиха' },
+  ];
+  const SKILLS = [
+    { id: 'ask', ua: 'Питати сусідів' },
+    { id: 'track', ua: 'Іти по слідах' },
+    { id: 'call', ua: 'Гукати на ім’я' },
+    { id: 'look', ua: 'Дивитися вгору' },
+    { id: 'smell', ua: 'Нюхати' },
+  ];
+
+  function toggleSkill(id) {
+    const i = state.skills.indexOf(id);
+    if (i >= 0) state.skills.splice(i, 1);
+    else if (state.skills.length < 3) state.skills.push(id);
+    renderBuild();
+  }
+
+  function renderBuild() {
+    const ready = state.character !== null && state.skills.length === 3;
+    document.getElementById('scene-build').innerHTML = `
+      <div class="slot">
+        <h2>Характер</h2>
+        <p>Це те, як істота поводиться з людьми.</p>
+        <div class="card-row">
+          ${CHARACTERS.map((c) => `
+            <div class="card ${state.character === c.id ? 'selected' : ''}" role="button" tabindex="0" onclick="state.character='${c.id}'; renderBuild()">${c.ua}</div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="slot">
+        <h2>Уміння</h2>
+        <p>Це те, що істота вміє робити.</p>
+        <div class="card-row">
+          ${SKILLS.map((s) => `
+            <div class="card ${state.skills.includes(s.id) ? 'selected' : ''}" role="button" tabindex="0" onclick="toggleSkill('${s.id}')">${s.ua}</div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="slot slot-locked">
+        <h2>🔒 Пам’ять</h2>
+        <p>Це те, що істота пам’ятає між кроками. Поки що недоступно.</p>
+      </div>
+      <div class="slot slot-locked">
+        <h2>🔒 Правила</h2>
+        <p>Правило — це те, чого істота не зробить ніколи. Наприклад: не заходити на подвір’я, де є собака. Відкриється на рівні 2.</p>
+      </div>
+      <button ${ready ? '' : 'disabled'} onclick="startRun1()">${ready ? 'Відправити на пошуки' : 'Обери характер і три уміння'}</button>
+    `;
+  }
+  renderBuild();
+
+  // Run 1 scene
+  // Measured off assets/map.webp itself by overlaying a 10% grid, not guessed. The prompt in
+  // docs/product/2026-09-11-demo-art-prompts.md asked for slightly different spots and the render
+  // drifted from them, so the code follows the file. Regenerate the map and these must be re-measured.
+  const MAP_POS = {
+    home:   { x: 16, y: 72 },
+    myron:  { x: 33, y: 45 },
+    shop:   { x: 61, y: 69 },
+    garden: { x: 81, y: 41 },
+    school: { x: 60, y: 17 },
+    pond:   { x: 25, y: 25 },
+  };
+
+  // A creature that never picked "ask" is never described as asking.
+  const HOW = {
+    ask:   (p) => 'Запитав(ла) ' + p,
+    track: () => 'Пішов(шла) по слідах',
+    call:  () => 'Погукав(ла) Сірка на ім’я',
+    look:  () => 'Подивився(лась) угору',
+    smell: () => 'Понюхав(ла) повітря',
+  };
+
+  function logLine(step, skills) {
+    // Rotate through the skills the player actually installed, so six lines do not read identically.
+    const how = HOW[skills[step.move % skills.length]];
+    const place = LEVEL.POINTS[step.to].at;
+    return {
+      time: String(step.hour).padStart(2, '0') + ':00',
+      text: how(place) + ' — «' + step.say + '»',
+      repeat: step.repeat,
+      note: step.repeat ? 'тут уже був(ла)' : (step.viaMemory ? 'сюди ще не заходив(ла)' : ''),
+    };
+  }
+
+  function renderStep(line) {
+    const row = document.createElement('div');
+    row.className = 'step' + (line.repeat ? ' step--repeat' : '');
+    row.innerHTML =
+      '<span class="step__time"></span><span class="step__text"></span><span class="step__note"></span>';
+    row.querySelector('.step__time').textContent = line.time;
+    row.querySelector('.step__text').textContent = line.text;
+    row.querySelector('.step__note').textContent = line.note;
+    return row;
+  }
+
+  function playRun(run, mountId, onDone) {
+    let i = 0, paused = false, delay = 1200, timer = null;
+    const mount = document.getElementById(mountId);
+    function tick() {
+      clearTimeout(timer);
+      if (paused) return;
+      if (i >= run.log.length) { onDone(); return; }
+      mount.appendChild(renderStep(logLine(run.log[i], state.skills)));
+      i += 1;
+      timer = setTimeout(tick, delay);
+    }
+    tick();
+    return {
+      toggle() { paused = !paused; if (!paused) tick(); },
+      faster() { delay = 400; if (!paused && i < run.log.length) tick(); },
+      stop() { clearTimeout(timer); },
+    };
+  }
+
+  function renderMapHotspots(prefix) {
+    // Small landmark drawings sit on signposts over the matching places in the art.
+    const icons = {
+      home: '<path d="M3 11 12 4l9 7M5 10v10h14V10M10 20v-6h4v6"/>',
+      myron: '<path d="m3 11 9-7 9 7M5 10v10h14V10M9 14h6v6M17 5V3M3 20h18"/>',
+      shop: '<path d="M4 10v10h16V10M3 10l2-6h14l2 6M3 10q3 4 6 0 3 4 6 0 3 4 6 0M9 20v-6h6v6"/>',
+      garden: '<path d="M12 21V10M12 14C3 14 3 7 3 7s9-1 9 7Zm0-4c0-7 8-7 8-7s1 7-8 7ZM5 21h14"/>',
+      school: '<path d="M3 9h18L12 3 3 9Zm2 0v11h14V9M3 20h18M9 20v-6h6v6M12 6v1"/>',
+      pond: '<path d="M3 16q3-3 6 0t6 0 6 0M3 20q3-3 6 0t6 0 6 0M8 12V4M8 8 4 5M8 10l4-5M17 12V6"/>',
+    };
+    return Object.keys(MAP_POS).map((id) => {
+      const pos = MAP_POS[id];
+      const visited = id === 'home' ? ' visited' : '';
+      return `<div class="hotspot${visited}" id="hotspot-${prefix}-${id}" style="left:${pos.x}%; top:${pos.y}%;">
+        <span class="hotspot__dot" aria-hidden="true"><svg viewBox="0 0 24 24">${icons[id]}</svg></span>
+        <span class="hotspot__label">${LEVEL.POINTS[id].ua}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Shared by run 1 and run 2 — the map box, its SVG arrow overlay and the creature marker,
+  // all positioned from the same MAP_POS percentages so no run duplicates this markup.
+  function renderMap(prefix) {
+    return `
+      <div class="map" id="${prefix}-map">
+        <img src="assets/map.webp" alt="Карта села: двір Лесі, двір Мирона, крамниця, сад, дах школи, ставок">
+        <svg class="map-routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+        ${renderMapHotspots(prefix)}
+        <div class="creature-marker" id="${prefix}-creature" data-creature="${state.creature}" style="left:${MAP_POS.home.x}%; top:${MAP_POS.home.y}%;" aria-hidden="true">
+          <img src="assets/hero.webp" alt="">
+        </div>
+      </div>
+    `;
+  }
+
+  function renderRunControls(prefix) {
+    return `
+      <div class="stage-bar">
+        <div class="daylight" aria-hidden="true">
+          <div class="daylight__ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <svg class="daylight__sun" viewBox="0 0 32 32" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <circle cx="16" cy="16" r="8"/><path d="M16 1v3m0 24v3M1 16h3m24 0h3M5 5l2 2m18 18 2 2M5 27l2-2M25 7l2-2"/>
+          </svg>
+        </div>
+        <div class="controls">
+          <button id="${prefix}-pause-btn" onclick="toggleRunPause('${prefix}')">Пауза</button>
+          <button id="${prefix}-faster-btn" onclick="runState['${prefix}'].controls.faster()">Швидше</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // A finished run rendered instantly (no playback) — used to keep the run-1 log readable
+  // beside the post-mortem question and beside run 2.
+  function renderStaticLog(mountId, run, newestFirst) {
+    const mount = document.getElementById(mountId);
+    mount.innerHTML = '';
+    // The live commentary puts the newest line on top; a log shown beside it has to agree.
+    const steps = newestFirst ? [...run.log].reverse() : run.log;
+    steps.forEach((step) => mount.appendChild(renderStep(logLine(step, state.skills))));
+  }
+
+  function renderRun1() {
+    document.getElementById('scene-run1').innerHTML = `
+      <div class="run-layout">
+        <div class="run-stage">
+          ${renderRunControls('run1')}
+          ${renderMap('run1')}
+        </div>
+        <aside class="run-commentary">
+          <div class="log live-log" id="run1-log" role="log" aria-live="polite" tabindex="0"></div>
+          <div class="ending" id="run1-ending" hidden>
+            <p>Сонце сіло. Сірка не знайшли.</p>
+            <button onclick="renderPostmortem(); showScene('postmortem')">Розібратися, що пішло не так</button>
+          </div>
+        </aside>
+      </div>
+    `;
+  }
+
+  const runState = {
+    run1: { controls: null, paused: false },
+    run2: { controls: null, paused: false },
+  };
+
+  function toggleRunPause(prefix) {
+    const rs = runState[prefix];
+    rs.paused = !rs.paused;
+    rs.controls.toggle();
+    document.getElementById(prefix + '-pause-btn').textContent = rs.paused ? 'Далі' : 'Пауза';
+  }
+
+  // Watches the same log playRun animates and keeps the map (route lines, visited hotspots,
+  // the creature marker) in step with it — kept outside playRun so playRun stays generic,
+  // and parameterized by prefix so run 1 and run 2 share this exact logic.
+  function syncMapToLog(run, prefix, logMount) {
+    const map = document.getElementById(prefix + '-map');
+    const svg = map.querySelector('.map-routes');
+    const creature = document.getElementById(prefix + '-creature');
+    let shown = 0;
+    const observer = new MutationObserver(() => {
+      while (shown < logMount.children.length) {
+        const step = run.log[shown];
+        const from = MAP_POS[step.from];
+        const to = MAP_POS[step.to];
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', from.x);
+        line.setAttribute('y1', from.y);
+        line.setAttribute('x2', to.x);
+        line.setAttribute('y2', to.y);
+        line.setAttribute('class', 'route' + (step.repeat ? ' route--repeat' : ''));
+        svg.appendChild(line);
+        document.getElementById('hotspot-' + prefix + '-' + step.to).classList.add('visited');
+        creature.style.left = to.x + '%';
+        creature.style.top = to.y + '%';
+        // Presentation only: keep the newest commentary first and advance the daylight with the walk.
+        logMount.children[shown].style.order = -shown;
+        logMount.scrollTop = 0;
+        map.dataset.hour = step.hour;
+        map.closest('.run-stage').style.setProperty('--day-progress', ((step.hour - 8) / 12 * 100) + '%');
+        map.classList.toggle('map--repeat', step.repeat);
+        map.querySelectorAll('.hotspot--current').forEach((place) => place.classList.remove('hotspot--current'));
+        document.getElementById('hotspot-' + prefix + '-' + step.to).classList.add('hotspot--current');
+        shown += 1;
+      }
+    });
+    observer.observe(logMount, { childList: true });
+    return observer;
+  }
+
+  function startRun1() {
+    if (runState.run1.controls) runState.run1.controls.stop();
+    state.run1 = LEVEL.walk({ memory: false });
+    renderRun1();
+    showScene('run1');
+
+    const logMount = document.getElementById('run1-log');
+    const observer = syncMapToLog(state.run1, 'run1', logMount);
+
+    runState.run1.paused = false;
+    runState.run1.controls = playRun(state.run1, 'run1-log', () => {
+      observer.disconnect();
+      document.getElementById('run1-map').classList.add('dusk');
+      document.getElementById('run1-ending').hidden = false;
+      document.getElementById('run1-pause-btn').disabled = true;
+      document.getElementById('run1-faster-btn').disabled = true;
+    });
+  }
+
+  // Post-mortem scene
+  const POSTMORTEM_ANSWERS = [
+    { text: 'Істота не знала, куди йти', correct: false,
+      reply: 'Знала. Кожен сусід щось підказував — подивись на 10:00.' },
+    { text: 'Істота не пам’ятала, де вже була', correct: true,
+      reply: 'Саме так. О 16:00 вона пішла туди, де вже була о 10:00.' },
+    { text: 'Істота ходила надто повільно', correct: false,
+      reply: 'Швидкості вистачало. За п’ять кроків можна було встигнути.' },
+  ];
+
+  let postmortemAnswer = null;
+  let postmortemSolved = false;
+
+  function answerPostmortem(i) {
+    if (postmortemSolved) return;  // the screen would otherwise contradict the fix already installed
+    postmortemAnswer = i;
+    if (POSTMORTEM_ANSWERS[i].correct) postmortemSolved = true;
+    renderPostmortem();
+  }
+
+  function installMemory() {
+    state.memory = true;                       // set only from the player's own action
+    state.run2 = LEVEL.walk({ memory: true }); // a fresh day: home, 08:00, nothing visited
+    document.getElementById('relaunch').disabled = false;
+  }
+
+  function renderPostmortem() {
+    const reply = postmortemAnswer === null ? '' : POSTMORTEM_ANSWERS[postmortemAnswer].reply;
+    document.getElementById('scene-postmortem').innerHTML = `
+      <h1>Що пішло не так?</h1>
+      <p>Хто підказував по дорозі:</p>
+      <div class="card-row">
+        <img src="assets/myron.webp" alt="Мирон, сусід Лесі" width="72" height="72" style="object-fit: cover; border-radius: 50%;">
+        <img src="assets/shopkeeper.webp" alt="продавчиня з крамниці" width="72" height="72" style="object-fit: cover; border-radius: 50%;">
+        <img src="assets/gardener.webp" alt="садівник" width="72" height="72" style="object-fit: cover; border-radius: 50%;">
+      </div>
+      <div class="log log--full" id="postmortem-log"></div>
+      <div class="card-row">
+        ${POSTMORTEM_ANSWERS.map((a, i) => `
+          <div class="card" role="button" tabindex="0" onclick="answerPostmortem(${i})">${a.text}</div>
+        `).join('')}
+      </div>
+      ${reply ? `<p id="postmortem-reply">${reply}</p>` : ''}
+      ${postmortemSolved ? `
+        <div class="slot">
+          <h2>Пам’ять</h2>
+          <div class="card-row">
+            ${state.memory
+              ? `<div class="card selected">Пам’ятати, де вже був</div>`
+              : `<div class="card" role="button" tabindex="0" onclick="installMemory(); renderPostmortem();">Пам’ятати, де вже був</div>`}
+          </div>
+          ${state.memory ? '' : '<p>Постав її у порожній слот</p>'}
+        </div>
+        <div class="slot">
+          <h2>Характер</h2>
+          <p>${CHARACTERS.find((c) => c.id === state.character).ua}</p>
+        </div>
+        <div class="slot">
+          <h2>Уміння</h2>
+          <p>${state.skills.map((id) => SKILLS.find((s) => s.id === id).ua).join(', ')}</p>
+        </div>
+        <button id="relaunch" ${state.memory ? '' : 'disabled'} onclick="startRun2()">Запустити ще раз</button>
+      ` : ''}
+    `;
+    renderStaticLog('postmortem-log', state.run1);
+  }
+
+  // Run 2 scene
+  function renderRun2() {
+    document.getElementById('scene-run2').innerHTML = `
+      <div class="run-layout">
+        <div class="run-stage">
+          <h2>Друга спроба</h2>
+          ${renderRunControls('run2')}
+          ${renderMap('run2')}
+        </div>
+        <aside class="run-commentary">
+          <div class="log live-log" id="run2-log" role="log" aria-live="polite" tabindex="0"></div>
+          <div class="ending" id="run2-ending" hidden>
+            <p>Сірко знайшовся о 18:00. До заходу сонця ще дві години.</p>
+            <button onclick="renderReward(); showScene('reward')">Забрати нагороду</button>
+          </div>
+          <div class="run-history">
+            <h2>Перша спроба</h2>
+            <div class="log log--full" id="run2-compare-log" tabindex="0"></div>
+          </div>
+        </aside>
+      </div>
+    `;
+  }
+
+  function startRun2() {
+    if (runState.run2.controls) runState.run2.controls.stop();
+    renderRun2();
+    showScene('run2');
+    renderStaticLog('run2-compare-log', state.run1, true);
+
+    const logMount = document.getElementById('run2-log');
+    const observer = syncMapToLog(state.run2, 'run2', logMount);
+
+    runState.run2.paused = false;
+    runState.run2.controls = playRun(state.run2, 'run2-log', () => {
+      observer.disconnect();
+      document.getElementById('run2-ending').hidden = false;
+      document.getElementById('run2-pause-btn').disabled = true;
+      document.getElementById('run2-faster-btn').disabled = true;
+    });
+  }
+
+  // Reward scene
+  const LEADERBOARD_FICTIONAL = [
+    { name: 'Оксана', moves: 3 },
+    { name: 'Дмитро', moves: 4 },
+    { name: 'Соломія', moves: 6 },
+    { name: 'Тарас', moves: 7 },
+    { name: 'Наталка', moves: 8 },
+  ];
+
+  // Ukrainian numeral agreement for "крок" — every row uses this, fictional and the player's alike.
+  function moveWord(n) {
+    const mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'крок';
+    if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 'кроки';
+    return 'кроків';
+  }
+
+  function renderLeaderboard() {
+    const rows = LEADERBOARD_FICTIONAL.concat({ name: 'ти', moves: state.run2.moves })
+      .sort((a, b) => a.moves - b.moves);
+    return rows.map((r, i) => `
+      <div class="leaderboard-row${r.name === 'ти' ? ' leaderboard-row--you' : ''}">
+        <span class="leaderboard-rank">${i + 1}</span>
+        <span class="leaderboard-name">${r.name}</span>
+        <span class="leaderboard-moves">${r.moves} ${moveWord(r.moves)}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderReward() {
+    document.getElementById('scene-reward').innerHTML = `
+      <h1>Нагорода</h1>
+      <div class="badges">
+        <div class="badge badge--1">
+          <h2>Перший агент</h2>
+          <p>зібрав(ла) свою першу істоту</p>
+        </div>
+        <div class="badge badge--2">
+          <h2>Відлагодив</h2>
+          <p>знайшов(шла) причину помилки і виправив(ла) її</p>
+        </div>
+      </div>
+      <p class="streak-hint">Завтра — другий день поспіль.</p>
+      <h2>Демо-таблиця: ці гравці вигадані</h2>
+      <div class="leaderboard">
+        ${renderLeaderboard()}
+      </div>
+      <button onclick="showScene('teaser')">Подивитися, що далі</button>
+    `;
+  }
+
+  // Teaser scene — static, nothing to compute, so it renders once at load like intro/pick.
+  document.getElementById('scene-teaser').innerHTML = `
+    <h1>Рівень 2</h1>
+    <div class="slot slot-locked">
+      <h2>🔒 Рівень 2</h2>
+      <p>Найняти помічника. Одна істота не встигає все сама. Скоро.</p>
+    </div>
+    <p>Розкажи, що думаєш</p>
+  `;
+
+  // The choices are styled divs, not buttons, so the level would be unplayable from a keyboard.
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const card = event.target.closest('[role="button"]');
+    if (!card) return;
+    event.preventDefault();
+    card.click();
+  });
+
+  // Self-test hook
+  if (new URLSearchParams(location.search).get('selftest') === '1') {
+    const a = LEVEL.walk({ memory: false });
+    const b = LEVEL.walk({ memory: true });
+    const ok = a.outcome === 'sunset' && a.moves === 6
+      && a.log.filter((s) => s.repeat).length === 3
+      && b.outcome === 'found' && b.moves === 5
+      && b.log.filter((s) => s.repeat).length === 0;
+    document.body.innerHTML =
+      '<pre>' + (ok ? 'SELFTEST PASS' : 'SELFTEST FAIL') +
+      '\nno memory: ' + a.outcome + ' on move ' + a.moves +
+      ', repeats ' + a.log.filter((s) => s.repeat).length +
+      '\nmemory:    ' + b.outcome + ' on move ' + b.moves +
+      ', repeats ' + b.log.filter((s) => s.repeat).length + '</pre>';
+  }
+</script>
