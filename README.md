@@ -4,7 +4,7 @@ A maths game for kids where the AI helper gives hints, never answers.
 
 **Play now, no install, no account:** https://xelagate.github.io/agent-academy/
 
-**Android APK for the Solana Seeker:** [Releases](https://github.com/Xelagate/agent-academy/releases) (latest v0.3.2)
+**Android APK for the Solana Seeker:** [Releases](https://github.com/Xelagate/agent-academy/releases) (latest v0.3.3)
 
 ## The problem
 

@@ -1,6 +1,6 @@
 // After the first online launch the app opens with no network. The page itself is network-first,
 // so a new release shows on the next launch instead of the one after.
-const CACHE = 'agent-academy-bb3bfdacdebf';
+const CACHE = 'agent-academy-20b940ae3466';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {

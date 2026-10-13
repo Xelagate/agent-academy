@@ -26,6 +26,17 @@ try {
   // file:// pages have no origin; the gate still works, only the wallet is missing.
 }
 
+// Only a Seeker has a wallet built in (Seed Vault); on any other phone or browser the wallet gate is
+// a dead end. Chrome on Android hides the model in the user agent ("K"), so ask the client hints too.
+const onSeeker = (async () => {
+  if (/\bSeeker\b/.test(navigator.userAgent)) return true;
+  try {
+    return (await navigator.userAgentData?.getHighEntropyValues(['model']))?.model === 'Seeker';
+  } catch {
+    return false;
+  }
+})();
+
 function readParent() {
   try { return localStorage.getItem(KEY); } catch { return null; }
 }
@@ -119,7 +130,10 @@ const sheet = el(`
     <button type="button" class="aa-link" id="aa-close">Close</button>
   </dialog>`);
 
-function openSheet() {
+async function openSheet() {
+  const seeker = await onSeeker;
+  sheet.querySelector('.aa-sheet__wallet').hidden = !seeker;
+  sheet.querySelector('#aa-account').hidden = !seeker;
   const parent = readParent();
   sheet.querySelector('.aa-sheet__wallet').innerHTML = parent
     ? 'Signed in as <code id="aa-address"></code>'
@@ -147,4 +161,4 @@ const parentsButton = el('<button type="button" class="aa-parents-btn" id="aa-pa
 parentsButton.addEventListener('click', openSheet);
 document.body.append(parentsButton, sheet);
 
-if (!readParent()) showGate();
+onSeeker.then((seeker) => { if (seeker && !readParent()) showGate(); });
